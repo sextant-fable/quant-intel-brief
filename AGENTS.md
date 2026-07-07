@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-Phase 0 foundation is implemented and awaiting review before Phase 1. Do not implement collectors, extraction, enrichment, deduplication, ranking, LLM summarization, email delivery, scheduling, or real dashboard business logic until the user explicitly starts the relevant phase.
+Phase 1 public source framework is implemented. Do not implement broad source coverage, extraction, enrichment, deduplication, ranking, LLM summarization, report generation, email delivery, scheduling, or dashboard business views until the relevant phase in `PLANS.md`.
 
 ## Repository Layout
 

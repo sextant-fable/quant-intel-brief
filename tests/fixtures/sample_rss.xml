@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Fixture Quant Feed</title>
+    <language>en-us</language>
+    <link>https://feeds.example.test/</link>
+    <description>Metadata-only test feed.</description>
+    <item>
+      <guid>fixture-1</guid>
+      <title>ETF flows rebalance into systematic value</title>
+      <link>https://example.test/research/etf-flows#fragment</link>
+      <author>Research Desk</author>
+      <pubDate>Tue, 07 Jul 2026 12:30:00 GMT</pubDate>
+      <category>ETF</category>
+      <category>quant</category>
+      <description><![CDATA[<p>Compact market metadata with <strong>HTML</strong> tags.</p>]]></description>
+    </item>
+    <item>
+      <guid>fixture-2</guid>
+      <title>Open source backtest library ships risk model update</title>
+      <link>https://example.test/dev/risk-model-update</link>
+      <author>Developer Desk</author>
+      <pubDate>Tue, 07 Jul 2026 13:15:00 GMT</pubDate>
+      <category>GitHub</category>
+      <description>Short project metadata only.</description>
+    </item>
+  </channel>
+</rss>

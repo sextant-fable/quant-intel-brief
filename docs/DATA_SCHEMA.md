@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared SQLModel table definitions are implemented in `app/db/models.py`. These are schema foundations for later phases; collectors and business pipeline behavior are not implemented in Phase 0.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results.
 
 ## Planned Core Entities
 
@@ -56,3 +56,12 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. These a
 - `report_sections`
 - `delivery_logs`
 - `source_statuses`
+
+## Phase 1 Persistence Rules
+
+- Collector results are persisted through `persist_collector_result`.
+- `Source` rows are keyed by source name.
+- `RawItem` rows are keyed by source ID plus source item ID.
+- `ContentItem` rows are keyed by source name plus source item ID, with duplicate canonical URLs collapsed deterministically.
+- `SourceStatus` stores the last returned status for a collector run.
+- RSS metadata stores compact excerpts only; no article body or premium full text is stored.

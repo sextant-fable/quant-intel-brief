@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 0 foundation is implemented. The app now has local configuration loading, SQLModel table definitions, SQLite session helpers, and fixture-only health/status routes. Business pipeline logic is intentionally not implemented yet.
+Phase 1 public source framework is implemented. The app has local configuration loading, SQLModel table definitions, SQLite session helpers, health/status routes, and a metadata-only RSS collector tested with fixtures and mocked HTTP. Broad source coverage and business pipeline logic are intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -38,7 +38,7 @@ mypy app tests
 
 ## Running The App
 
-Run the local Phase 0 app shell with:
+Run the local app shell with:
 
 ```bash
 uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
@@ -49,6 +49,8 @@ Available fixture-only system routes:
 - `GET /health`
 - `GET /status/sources`
 - `GET /settings/public`
+
+Collectors do not run automatically from the app shell. The Phase 1 RSS adapter is exercised through tests and future job wiring.
 
 ## Repository Layout
 
@@ -63,4 +65,4 @@ Available fixture-only system routes:
 
 ## Status
 
-Phase 0 is ready for review. The next milestone is Phase 1: the public source framework and first mocked RSS collector.
+Phase 1 is complete. The next milestone is Phase 2: official/public API collectors for market, macro, research, and developer metadata.

@@ -12,7 +12,7 @@ from app.web.routes import register_routes
 
 
 def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
-    """Create the local FastAPI app with Phase 0 fixture-only routes."""
+    """Create the local FastAPI app."""
     active_settings = settings or get_settings()
     configure_logging(active_settings.log_level)
 

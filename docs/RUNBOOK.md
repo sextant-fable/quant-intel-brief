@@ -21,9 +21,9 @@ ruff check .
 mypy app tests
 ```
 
-## Phase 0 App Shell
+## App Shell
 
-Run the local fixture-only app shell:
+Run the local app shell:
 
 ```bash
 uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
@@ -35,7 +35,17 @@ Useful local system routes:
 - `GET /status/sources`
 - `GET /settings/public`
 
-These routes expose only local fixture/status information. They do not run collectors, call external APIs, call an LLM, or send email.
+These routes expose only local system/status information. They do not run collectors, call external APIs, call an LLM, or send email.
+
+## Phase 1 Collector Checks
+
+The RSS adapter is available as a library component and is covered by fixture/mocked tests:
+
+```bash
+pytest tests/test_collectors.py
+```
+
+Collectors are not wired to a scheduler or dashboard action yet. Do not use live feeds in tests; add local fixtures or `respx` mocks instead.
 
 ## Incident Notes
 

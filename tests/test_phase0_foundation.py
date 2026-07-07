@@ -74,11 +74,11 @@ def test_create_app_registers_fixture_only_health_routes() -> None:
     public_settings = client.get("/settings/public")
 
     assert health.status_code == 200
-    assert health.json()["phase"] == "phase_0"
+    assert health.json()["phase"] == "phase_1"
     assert health.json()["app"] == "phase-zero-test"
     assert source_status.status_code == 200
     assert source_status.json()["sources"] == []
-    assert "collectors are not implemented" in source_status.json()["note"]
+    assert "does not auto-run" in source_status.json()["note"]
     assert public_settings.status_code == 200
     assert "deepseek_api_key" not in public_settings.json()
 

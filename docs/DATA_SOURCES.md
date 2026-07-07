@@ -4,7 +4,7 @@ This document tracks planned source adapters and their legal/technical requireme
 
 | Source | Module | Status | Access | Notes |
 | --- | --- | --- | --- | --- |
-| RSS | `app/collectors/rss.py` | Scaffold | Public feeds | Respect feed terms and robots guidance. |
+| RSS | `app/collectors/rss.py` | Phase 1 implemented | Public feeds | Metadata-only RSS/Atom parsing with mocked HTTP tests. Respect feed terms and robots guidance. |
 | NewsAPI | `app/collectors/newsapi.py` | Scaffold | API key | Store key in `.env`. |
 | GDELT | `app/collectors/gdelt.py` | Scaffold | Public/API | Confirm current API limits before use. |
 | Alpha Vantage | `app/collectors/alphavantage.py` | Scaffold | API key | Use only permitted endpoints. |
@@ -27,3 +27,11 @@ This document tracks planned source adapters and their legal/technical requireme
 - Keep credentials in `.env`; never commit secrets, cookies, or session exports.
 - Store metadata, source links, compact excerpts, and hashes by default.
 - Do not store full text unless the source terms and user authorization clearly permit it.
+
+## Phase 1 RSS Behavior
+
+- `RssCollector` accepts an explicit feed URL and does not run automatically from the app shell.
+- HTTP fetches use shared timeout, retry, and HTTP 429 handling from `app/collectors/base.py`.
+- Parsed records include source IDs, URLs, canonical URLs, titles, compact excerpts, authors, publisher/feed name, publication time, fetch time, language, tags, and payload hashes.
+- Duplicate source IDs or canonical URLs are skipped deterministically within a run.
+- Tests use local XML fixtures and `respx`; no live feed requests are made in tests.
