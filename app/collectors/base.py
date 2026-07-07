@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
@@ -10,9 +13,10 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+from dateutil import parser as date_parser  # type: ignore[import-untyped]
 from sqlmodel import Session, select
 
-from app.core.timezones import utc_now
+from app.core.timezones import UTC, ensure_utc, utc_now
 from app.db.models import ContentItem, RawItem, Source, SourceStatus
 
 
@@ -62,6 +66,16 @@ class FetchResult:
 
     status: CollectorStatus
     text: str | None = None
+    status_code: int | None = None
+    message: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class JsonFetchResult:
+    """Result of a collector JSON fetch."""
+
+    status: CollectorStatus
+    data: Any | None = None
     status_code: int | None = None
     message: str | None = None
 
@@ -119,6 +133,8 @@ class SourceCollector:
     async def fetch_text(
         self,
         url: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         client: httpx.AsyncClient | None = None,
     ) -> FetchResult:
         """Fetch a URL with shared timeout, retry, and rate-limit handling."""
@@ -129,7 +145,7 @@ class SourceCollector:
         try:
             for attempt in range(1, attempts + 1):
                 try:
-                    response = await active_client.get(url)
+                    response = await active_client.get(url, params=params, headers=headers)
                     if response.status_code == 429:
                         return FetchResult(
                             status=CollectorStatus.RATE_LIMITED,
@@ -173,6 +189,34 @@ class SourceCollector:
             if owns_client:
                 await active_client.aclose()
 
+    async def fetch_json(
+        self,
+        url: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        client: httpx.AsyncClient | None = None,
+    ) -> JsonFetchResult:
+        """Fetch and decode JSON with shared HTTP behavior."""
+        fetch_result = await self.fetch_text(url, params=params, headers=headers, client=client)
+        if fetch_result.status != CollectorStatus.SUCCESS:
+            return JsonFetchResult(
+                status=fetch_result.status,
+                status_code=fetch_result.status_code,
+                message=fetch_result.message,
+            )
+        try:
+            return JsonFetchResult(
+                status=CollectorStatus.SUCCESS,
+                data=json.loads(fetch_result.text or "{}"),
+                status_code=fetch_result.status_code,
+            )
+        except json.JSONDecodeError as exc:
+            return JsonFetchResult(
+                status=CollectorStatus.FAILED,
+                status_code=fetch_result.status_code,
+                message=f"JSON decode failed: {exc}",
+            )
+
     async def _sleep_before_retry(self) -> None:
         if self.config.retry_backoff_seconds > 0:
             await asyncio.sleep(self.config.retry_backoff_seconds)
@@ -190,6 +234,35 @@ def canonicalize_url_for_storage(url: str) -> str:
             parts.query,
         )
     )
+
+
+def compact_text_for_storage(value: Any | None, max_chars: int = 500) -> str | None:
+    """Normalize and bound plain-text source snippets."""
+    if value is None:
+        return None
+    cleaned = re.sub(r"\s+", " ", str(value)).strip()
+    if not cleaned:
+        return None
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return f"{cleaned[: max_chars - 1].rstrip()}..."
+
+
+def hash_text(value: str) -> str:
+    """Hash source identifiers or payload references without storing full payloads."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def parse_datetime_utc(value: str | int | float | None) -> datetime | None:
+    """Parse common source timestamps as UTC datetimes."""
+    if value is None or value == "":
+        return None
+    try:
+        if isinstance(value, int | float):
+            return datetime.fromtimestamp(value, tz=UTC)
+        return ensure_utc(date_parser.parse(str(value)))
+    except (ValueError, TypeError, OverflowError):
+        return None
 
 
 def persist_collector_result(
@@ -363,7 +436,11 @@ __all__ = [
     "CollectorRunResult",
     "CollectorStatus",
     "FetchResult",
+    "JsonFetchResult",
     "SourceCollector",
     "canonicalize_url_for_storage",
+    "compact_text_for_storage",
+    "hash_text",
+    "parse_datetime_utc",
     "persist_collector_result",
 ]

@@ -37,15 +37,17 @@ Useful local system routes:
 
 These routes expose only local system/status information. They do not run collectors, call external APIs, call an LLM, or send email.
 
-## Phase 1 Collector Checks
+## Collector Checks
 
-The RSS adapter is available as a library component and is covered by fixture/mocked tests:
+The RSS adapter and Phase 2 public/official API adapters are available as library components and are covered by fixture/mocked tests:
 
 ```bash
 pytest tests/test_collectors.py
 ```
 
 Collectors are not wired to a scheduler or dashboard action yet. Do not use live feeds in tests; add local fixtures or `respx` mocks instead.
+
+Phase 2 adapters may require local `.env` credentials for real personal runs later, but no live-run command is provided yet. Missing keys or SEC user-agent settings should return collector failure states before HTTP is attempted.
 
 ## Incident Notes
 

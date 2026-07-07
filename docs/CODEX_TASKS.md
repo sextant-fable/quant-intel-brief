@@ -19,6 +19,8 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add Phase 0 schema and app shell tests.
 - [x] Add normalized item schema tests for collector persistence.
 - [x] Implement one public collector end to end with mocked HTTP tests.
+- [x] Implement official/public API collectors with mocked HTTP tests.
+- [x] Add missing-key, rate-limit, failure, and metadata-only collector tests.
 - [ ] Implement deduplication baseline.
 - [ ] Implement ranking baseline.
 - [ ] Implement report generation from fixtures only.
@@ -39,3 +41,11 @@ Use this document to break future work into safe implementation tasks.
 - Collector metadata persists into source, raw item, content item, and source status tables.
 - Duplicate source IDs and canonical URLs are handled deterministically.
 - Tests use fixtures and mocked HTTP only.
+
+## Phase 2 Done Criteria
+
+- NewsAPI, GDELT, Alpha Vantage, Finnhub, FRED, SEC EDGAR, arXiv, and GitHub adapters emit normalized metadata.
+- Key-gated collectors fail before HTTP when required local settings are absent.
+- HTTP 429 and HTTP 500 responses are covered by mocked tests.
+- Collectors store compact excerpts/summaries and safe metadata only.
+- No social, video, premium, ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.

@@ -1,0 +1,18 @@
+{
+  "items": "1",
+  "feed": [
+    {
+      "title": "Systematic strategy note mentions factor rotation",
+      "url": "https://example.test/alpha/factor-rotation",
+      "time_published": "20260707T121500",
+      "authors": ["Quant Desk"],
+      "summary": "Compact Alpha Vantage fixture summary.",
+      "source": "Fixture Markets",
+      "source_domain": "example.test",
+      "category_within_source": "Markets",
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [{"ticker": "SPY", "ticker_sentiment_label": "Neutral"}],
+      "topics": [{"topic": "Financial Markets", "relevance_score": "0.9"}]
+    }
+  ]
+}

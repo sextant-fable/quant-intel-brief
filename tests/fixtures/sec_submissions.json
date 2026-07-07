@@ -1,0 +1,13 @@
+{
+  "cik": "0000320193",
+  "name": "Fixture Public Company",
+  "filings": {
+    "recent": {
+      "accessionNumber": ["0000320193-26-000001"],
+      "filingDate": ["2026-07-07"],
+      "reportDate": ["2026-06-30"],
+      "form": ["10-Q"],
+      "primaryDocument": ["fixture-10q.htm"]
+    }
+  }
+}

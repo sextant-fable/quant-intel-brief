@@ -1,0 +1,19 @@
+{
+  "total_count": 1,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 42,
+      "full_name": "fixture/quant-toolkit",
+      "html_url": "https://github.com/fixture/quant-toolkit",
+      "description": "Open source quant research toolkit metadata.",
+      "updated_at": "2026-07-07T12:00:00Z",
+      "language": "Python",
+      "stargazers_count": 123,
+      "forks_count": 7,
+      "open_issues_count": 2,
+      "owner": {"login": "fixture"},
+      "license": {"spdx_id": "MIT"}
+    }
+  ]
+}

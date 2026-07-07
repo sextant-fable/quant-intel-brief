@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape.
 
 ## Planned Core Entities
 
@@ -65,3 +65,11 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `ContentItem` rows are keyed by source name plus source item ID, with duplicate canonical URLs collapsed deterministically.
 - `SourceStatus` stores the last returned status for a collector run.
 - RSS metadata stores compact excerpts only; no article body or premium full text is stored.
+
+## Phase 2 Metadata Rules
+
+- Public/official API collectors emit `CollectedItem` records only.
+- API keys, bearer tokens, user agents, and request headers are never persisted.
+- JSON/XML fixture responses are parsed into compact summaries, source IDs, URLs, timestamps, publisher/author fields, and safe source metadata.
+- SEC EDGAR stores filing metadata and filing links only; filing body text is not downloaded or stored.
+- arXiv stores paper metadata and links only; PDFs are not downloaded or stored.

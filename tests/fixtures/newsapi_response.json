@@ -1,0 +1,14 @@
+{
+  "status": "ok",
+  "totalResults": 1,
+  "articles": [
+    {
+      "source": {"id": "fixture-wire", "name": "Fixture Wire"},
+      "author": "Markets Desk",
+      "title": "ETF options volume rises before rebalance",
+      "description": "Short metadata summary for mocked NewsAPI coverage.",
+      "url": "https://example.test/news/etf-options-volume#comments",
+      "publishedAt": "2026-07-07T12:30:00Z"
+    }
+  ]
+}

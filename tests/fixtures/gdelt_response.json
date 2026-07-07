@@ -1,0 +1,13 @@
+{
+  "articles": [
+    {
+      "url": "https://example.test/gdelt/macro-volatility",
+      "title": "Macro volatility story appears in global coverage",
+      "seendate": "2026-07-07T12:45:00Z",
+      "sourceCommonName": "Example Global",
+      "domain": "example.test",
+      "sourceCountry": "US",
+      "language": "English"
+    }
+  ]
+}

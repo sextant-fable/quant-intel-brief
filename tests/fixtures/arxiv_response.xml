@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>arXiv Query Results</title>
+  <entry>
+    <id>https://arxiv.org/abs/2607.00001</id>
+    <updated>2026-07-07T12:00:00Z</updated>
+    <published>2026-07-07T12:00:00Z</published>
+    <title>Mocked quantitative finance paper</title>
+    <summary>Short arXiv fixture abstract metadata.</summary>
+    <author><name>Fixture Researcher</name></author>
+    <category term="q-fin.ST" />
+  </entry>
+</feed>

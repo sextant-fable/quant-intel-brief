@@ -1,0 +1,12 @@
+[
+  {
+    "category": "general",
+    "datetime": 1783437000,
+    "headline": "Options desk flags ETF hedging demand",
+    "id": 101,
+    "related": "SPY",
+    "source": "Fixture Finnhub",
+    "summary": "Short Finnhub fixture summary.",
+    "url": "https://example.test/finnhub/options-hedging"
+  }
+]
