@@ -37,6 +37,32 @@ mypy app tests
 
 Codex must not declare a phase complete if tests fail. If any validation command cannot run, Codex must stop, explain why, and wait for user direction.
 
+## Git Checkpoint Policy
+
+Codex must inspect `git status` before starting each phase and before completing each phase.
+
+Codex must not commit or push if validation commands fail.
+
+Codex must not commit or push secrets, `.env`, runtime DB files, generated reports, cookies, tokens, local browser profiles, or private artifacts.
+
+At the phase checkpoint, Codex must show changed files and summarize diffs.
+
+After tests pass, Codex must stop and wait for the user's review.
+
+Only after the user explicitly approves the checkpoint should Codex create a phase commit.
+
+Only after a successful commit should Codex push to the current tracked branch.
+
+If no git remote or upstream branch exists, Codex must stop and report the required setup command instead of guessing.
+
+Commit messages should follow:
+
+```text
+Phase N: <short phase name>
+```
+
+Codex must not squash or rewrite history unless the user explicitly requests it.
+
 ## Safety Rules
 
 - No real external API calls in tests.

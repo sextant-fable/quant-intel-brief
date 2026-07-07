@@ -81,6 +81,8 @@ During the scaffold stage, the app entry point is intentionally a placeholder.
 
 For multi-phase implementation, `PLANS.md` is authoritative. Do not invent alternate phase numbering.
 
+For Goal Mode commits and pushes, follow the Git Checkpoint Policy in `docs/GOAL_MVP.md`.
+
 Do not skip stages unless the user explicitly changes the plan.
 
 ## Legal And Data Boundaries
