@@ -13,10 +13,11 @@ Use this document to break future work into safe implementation tasks.
 
 ## Future Task Backlog
 
-- [ ] Define SQLModel models and migrations.
-- [ ] Implement configuration loading from `.env`.
-- [ ] Wire a fixture-only app factory and health route.
-- [ ] Add normalized item schema tests.
+- [x] Define SQLModel models and migration-ready table metadata.
+- [x] Implement configuration loading from `.env`.
+- [x] Wire a fixture-only app factory and health/status routes.
+- [x] Add Phase 0 schema and app shell tests.
+- [ ] Add normalized item schema tests for collector persistence.
 - [ ] Implement one public collector end to end with mocked HTTP tests.
 - [ ] Implement deduplication baseline.
 - [ ] Implement ranking baseline.

@@ -1,5 +1,207 @@
-"""Database model scaffold."""
+"""SQLModel database models for the local intelligence store."""
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from datetime import datetime
+from typing import Any, ClassVar
+from uuid import uuid4
+
+from sqlalchemy import JSON, UniqueConstraint
+from sqlmodel import Column, Field, SQLModel
+
+from app.core.timezones import utc_now
+
+
+def new_id() -> str:
+    """Return a compact stable ID for local records."""
+    return uuid4().hex
+
+
+class TimestampMixin(SQLModel):
+    """Timestamp fields shared by local tables."""
+
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+    updated_at: datetime | None = Field(default=None, nullable=True)
+
+
+class Source(TimestampMixin, table=True):
+    """Configured upstream source metadata."""
+
+    __tablename__: ClassVar[str] = "sources"
+    __table_args__: ClassVar[tuple[UniqueConstraint, ...]] = (
+        UniqueConstraint("name", name="uq_sources_name"),
+    )
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    name: str = Field(index=True, nullable=False)
+    source_type: str = Field(index=True, nullable=False)
+    display_name: str
+    access_mode: str = "public"
+    enabled: bool = True
+    terms_url: str | None = None
+    terms_checked_at: datetime | None = None
+
+
+class RawItem(SQLModel, table=True):
+    """Source item metadata as fetched, without copyrighted full text."""
+
+    __tablename__: ClassVar[str] = "raw_items"
+    __table_args__: ClassVar[tuple[UniqueConstraint, ...]] = (
+        UniqueConstraint("source_id", "source_item_id", name="uq_raw_items_source_item"),
+    )
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    source_id: str = Field(foreign_key="sources.id", index=True)
+    source_item_id: str = Field(index=True)
+    url: str
+    canonical_url: str | None = Field(default=None, index=True)
+    title: str | None = None
+    publisher: str | None = None
+    author: str | None = None
+    published_at: datetime | None = None
+    fetched_at: datetime = Field(default_factory=utc_now, nullable=False)
+    raw_payload_hash: str | None = Field(default=None, index=True)
+    raw_metadata: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+
+
+class ContentItem(SQLModel, table=True):
+    """Normalized item used by later pipeline phases."""
+
+    __tablename__: ClassVar[str] = "content_items"
+    __table_args__: ClassVar[tuple[UniqueConstraint, ...]] = (
+        UniqueConstraint("source_name", "source_item_id", name="uq_content_items_source_item"),
+    )
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    source_id: str | None = Field(default=None, foreign_key="sources.id", index=True)
+    raw_item_id: str | None = Field(default=None, foreign_key="raw_items.id", index=True)
+    source_name: str = Field(index=True)
+    source_item_id: str
+    url: str
+    canonical_url: str | None = Field(default=None, index=True)
+    title: str
+    summary: str | None = None
+    excerpt: str | None = None
+    author: str | None = None
+    publisher: str | None = None
+    published_at: datetime | None = Field(default=None, index=True)
+    fetched_at: datetime = Field(default_factory=utc_now, nullable=False)
+    language: str | None = None
+    tickers: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    assets: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    quant_topics: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    raw_payload_hash: str | None = Field(default=None, index=True)
+    source_terms_checked_at: datetime | None = None
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+class EntityTag(SQLModel, table=True):
+    """Tag attached to a content item or later event."""
+
+    __tablename__: ClassVar[str] = "entity_tags"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    item_id: str | None = Field(default=None, foreign_key="content_items.id", index=True)
+    entity_type: str = Field(index=True)
+    value: str = Field(index=True)
+    confidence: float = 1.0
+    provenance: str = "rule"
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+class Cluster(SQLModel, table=True):
+    """Deduplicated event placeholder for later phases."""
+
+    __tablename__: ClassVar[str] = "clusters"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    canonical_title: str
+    summary: str | None = None
+    item_ids: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+    updated_at: datetime | None = None
+
+
+class RankedItem(SQLModel, table=True):
+    """Ranking result placeholder for later phases."""
+
+    __tablename__: ClassVar[str] = "ranked_items"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    cluster_id: str | None = Field(default=None, foreign_key="clusters.id", index=True)
+    item_id: str | None = Field(default=None, foreign_key="content_items.id", index=True)
+    score: float = Field(default=0.0, index=True)
+    score_components: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    explanation: str | None = None
+    ranked_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+class Report(SQLModel, table=True):
+    """Generated report metadata."""
+
+    __tablename__: ClassVar[str] = "reports"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    report_date: datetime = Field(index=True)
+    title: str
+    status: str = Field(default="draft", index=True)
+    html_path: str | None = None
+    source_coverage_note: str | None = None
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+class ReportSection(SQLModel, table=True):
+    """Section metadata for a generated report."""
+
+    __tablename__: ClassVar[str] = "report_sections"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    report_id: str = Field(foreign_key="reports.id", index=True)
+    section_key: str = Field(index=True)
+    title: str
+    position: int = 0
+    content: str | None = None
+    source_refs: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+
+
+class DeliveryLog(SQLModel, table=True):
+    """Email or notification delivery result."""
+
+    __tablename__: ClassVar[str] = "delivery_logs"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    report_id: str = Field(foreign_key="reports.id", index=True)
+    provider: str
+    recipient_hash: str | None = None
+    status: str = Field(index=True)
+    error_message: str | None = None
+    delivered_at: datetime | None = None
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+class SourceStatus(SQLModel, table=True):
+    """Last known status for a source adapter."""
+
+    __tablename__: ClassVar[str] = "source_statuses"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    source_id: str | None = Field(default=None, foreign_key="sources.id", index=True)
+    source_name: str = Field(index=True)
+    status: str = Field(index=True)
+    message: str | None = None
+    last_checked_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+__all__ = [
+    "Cluster",
+    "ContentItem",
+    "DeliveryLog",
+    "EntityTag",
+    "RankedItem",
+    "RawItem",
+    "Report",
+    "ReportSection",
+    "Source",
+    "SourceStatus",
+    "new_id",
+]

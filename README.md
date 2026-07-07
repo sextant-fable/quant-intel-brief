@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Scaffold hardening before Phase 0. Business logic is intentionally not implemented yet.
+Phase 0 foundation is implemented. The app now has local configuration loading, SQLModel table definitions, SQLite session helpers, and fixture-only health/status routes. Business pipeline logic is intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -38,11 +38,17 @@ mypy app tests
 
 ## Running The App
 
-The app factory is not wired during scaffold hardening. After Phase 0 creates it, the local command will be:
+Run the local Phase 0 app shell with:
 
 ```bash
 uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
+
+Available fixture-only system routes:
+
+- `GET /health`
+- `GET /status/sources`
+- `GET /settings/public`
 
 ## Repository Layout
 
@@ -57,4 +63,4 @@ uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 
 ## Status
 
-Scaffold is being prepared for Phase 0. The next milestone is configuration loading, SQLModel database models, migrations, and a fixture-only app health route.
+Phase 0 is ready for review. The next milestone is Phase 1: the public source framework and first mocked RSS collector.

@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared schema definitions will be finalized in Phase 0 before collectors are implemented.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. These are schema foundations for later phases; collectors and business pipeline behavior are not implemented in Phase 0.
 
 ## Planned Core Entities
 
@@ -43,3 +43,16 @@ Shared schema definitions will be finalized in Phase 0 before collectors are imp
 - Do not store secret request headers or private cookies.
 - Do not store full text by default. Use compact excerpts and source references unless permitted.
 - Make uniqueness explicit with `source_name` plus `source_item_id` or canonical URL.
+
+## Phase 0 Tables
+
+- `sources`
+- `raw_items`
+- `content_items`
+- `entity_tags`
+- `clusters`
+- `ranked_items`
+- `reports`
+- `report_sections`
+- `delivery_logs`
+- `source_statuses`

@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-The repository is in scaffold hardening before Phase 0. Do not implement collectors, extraction, enrichment, deduplication, ranking, LLM summarization, email delivery, scheduling, or real dashboard business logic until the user explicitly starts that phase.
+Phase 0 foundation is implemented and awaiting review before Phase 1. Do not implement collectors, extraction, enrichment, deduplication, ranking, LLM summarization, email delivery, scheduling, or real dashboard business logic until the user explicitly starts the relevant phase.
 
 ## Repository Layout
 
@@ -63,7 +63,7 @@ Run the app after Phase 0 wires `app.main:create_app`:
 uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-During the scaffold stage, the app entry point is intentionally a placeholder.
+During Phase 0, the app entry point exposes only fixture system routes. Business routes remain out of scope.
 
 ## Engineering Conventions
 

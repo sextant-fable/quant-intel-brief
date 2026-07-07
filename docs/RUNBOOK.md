@@ -21,7 +21,21 @@ ruff check .
 mypy app tests
 ```
 
-`quant-intel-brief` and the web app are placeholders until Phase 0 wires the app factory.
+## Phase 0 App Shell
+
+Run the local fixture-only app shell:
+
+```bash
+uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Useful local system routes:
+
+- `GET /health`
+- `GET /status/sources`
+- `GET /settings/public`
+
+These routes expose only local fixture/status information. They do not run collectors, call external APIs, call an LLM, or send email.
 
 ## Incident Notes
 
