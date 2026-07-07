@@ -1,6 +1,6 @@
 # LLM Prompts
 
-Prompt templates and structured output requirements will live in `app/llm/prompts.py` and `app/llm/schemas.py`.
+Prompt templates and structured output requirements live in `app/llm/prompts.py` and `app/llm/schemas.py`.
 
 ## Prompt Principles
 
@@ -15,9 +15,17 @@ Prompt templates and structured output requirements will live in `app/llm/prompt
 
 ## Planned Prompt Families
 
-- Item summary.
-- Cluster summary.
-- Quant relevance explanation.
-- Daily lead-story selection rationale.
-- Email report rewrite.
-- Dashboard headline rewrite.
+- Event summary: implemented in Phase 7.
+- Report section summary: planned for report phases.
+- Daily lead-story selection rationale: planned for report phases.
+- Email report rewrite: planned for report phases.
+- Dashboard headline rewrite: planned for dashboard phases.
+
+## Phase 7 Behavior
+
+- `DeepSeekClient` uses `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`.
+- Tests use fake clients and do not make real LLM calls.
+- `EventSummary` validates structured fields before downstream use.
+- Summaries must cite only provided source IDs and URLs.
+- Missing evidence returns an explicit insufficient-evidence summary without calling the LLM.
+- Unknown source citations or advisory language fail validation and preserve ranked-event context for manual review.

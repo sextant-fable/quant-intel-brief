@@ -8,10 +8,10 @@ Build a daily intelligence brief system for quantitative-finance research, marke
 
 Local-first personal tool with SQLite storage, explicit user-managed credentials, a simple server-rendered dashboard, and optional email delivery.
 
-## Non-Goals Through Phase 6
+## Non-Goals Through Phase 7
 
 - No automatic live source collection.
-- No LLM calls.
+- No real LLM calls in tests.
 - No automated email delivery.
 - No production deployment.
 - No real dashboard business views.
@@ -40,6 +40,7 @@ Local-first personal tool with SQLite storage, explicit user-managed credentials
 6. Phase 4: canonicalization, compact-excerpt boundaries, source references, and retention metadata.
 7. Phase 5: deterministic event deduplication and rule-based source/ticker/asset/quant-theme tagging.
 8. Phase 6: deterministic ranking and heat scoring.
-9. Report generation.
-10. Dashboard and email delivery.
-11. QA, observability, and operational runbook.
+9. Phase 7: DeepSeek-compatible structured summarization with mocked tests.
+10. Report generation.
+11. Dashboard and email delivery.
+12. QA, observability, and operational runbook.

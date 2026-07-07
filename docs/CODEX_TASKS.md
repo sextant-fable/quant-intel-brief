@@ -29,6 +29,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement deduplication baseline.
 - [x] Implement conservative ticker, asset, source, and quant-theme tagging baseline.
 - [x] Implement ranking baseline.
+- [x] Implement DeepSeek-compatible structured summarization with mocked tests.
 - [ ] Implement report generation from fixtures only.
 - [ ] Implement dashboard route from fixtures.
 - [ ] Implement email preview before sending.
@@ -89,3 +90,11 @@ Use this document to break future work into safe implementation tasks.
 - Community heat is capped and cannot dominate from one untrusted source alone.
 - Explanations are complete and informational, not advisory.
 - No LLM, report, email, dashboard business, or scheduler behavior is implemented.
+
+## Phase 7 Done Criteria
+
+- DeepSeek configuration uses `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`.
+- Prompt construction sends only ranked-event context and compact source evidence.
+- Structured summary output validates source IDs, URLs, uncertainty, and insufficient-evidence handling.
+- Tests use fake clients and make no real external API calls.
+- No report generation, email delivery, scheduler behavior, or dashboard business views are implemented.

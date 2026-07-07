@@ -36,3 +36,10 @@ This project must respect source terms, copyright, privacy, and financial-advice
 The system is for information organization and research assistance. It must not provide personalized investment advice, trading instructions, or guarantees.
 
 Ranking and heat scores are informational prioritization signals. They must not be phrased as buy/sell/hold instructions, price targets, or portfolio recommendations.
+
+## LLM Summary Boundary
+
+- LLM summaries must be grounded only in provided evidence records.
+- Summaries must cite only source IDs and URLs that were passed into the prompt.
+- Missing or ambiguous evidence must remain explicit instead of being filled in by inference.
+- LLM output must not include buy/sell/hold instructions, price targets, or portfolio allocation advice.

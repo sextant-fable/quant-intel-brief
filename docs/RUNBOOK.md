@@ -81,6 +81,16 @@ pytest tests/test_ranking.py
 
 Ranking explanations are informational importance notes only. They must not contain trade instructions, price targets, or personalized recommendations.
 
+## Phase 7 LLM Summary Checks
+
+DeepSeek-compatible structured summarization is covered by mocked tests:
+
+```bash
+pytest tests/test_llm_summarization.py
+```
+
+Tests must use fake clients and make no real LLM calls. Local future runs may use `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`, but those values must stay in `.env` and never be committed.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.

@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 6 deterministic ranking and heat scoring are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, and explainable ranking score components. LLM summaries, reports, email, scheduling, and dashboard business views are intentionally not implemented yet.
+Phase 7 DeepSeek-compatible structured summarization is implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, and mocked source-grounded LLM summarization. Reports, email, scheduling, and dashboard business views are intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -65,4 +65,4 @@ Collectors do not run automatically from the app shell. Phase 1 through Phase 3 
 
 ## Status
 
-Phase 6 is complete. The next milestone is Phase 7: DeepSeek summarization.
+Phase 7 is complete. The next milestone is Phase 8: daily HTML email report generation.
