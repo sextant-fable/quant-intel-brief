@@ -1,6 +1,6 @@
 # Quant Intel Brief Implementation Plan
 
-This document is the phase contract for building Quant Intel Brief, a local-first personal Daily Quant Intelligence Briefing System. Codex should consult this file before any multi-phase implementation work and should not skip phases without explicit user approval.
+This document is the phase contract for building Quant Intel Brief, a local-first personal Daily Quant Intelligence Briefing System. Codex should consult this file before any multi-phase implementation work and must not invent alternate phase numbering or scope.
 
 ## Global Rules
 
@@ -11,7 +11,7 @@ This document is the phase contract for building Quant Intel Brief, a local-firs
 - Do not commit secrets, cookies, API keys, session exports, generated reports, or runtime databases.
 - Keep collection, extraction, tagging, deduplication, ranking, LLM summarization, reporting, email, dashboard, and scheduling as separate layers.
 - Use DeepSeek through an OpenAI-compatible client only when the LLM phase begins.
-- Stop after each phase checkpoint and wait for explicit user approval before starting the next phase.
+- In an explicitly approved Goal Mode run, continue automatically from one phase to the next after the phase checkpoint passes, commits, and pushes.
 
 ## Phase Dependencies
 
@@ -34,10 +34,10 @@ Phase 0 Foundation
 - Before starting a phase, Codex must read `AGENTS.md`, `PLANS.md`, relevant `docs/*.md`, and any relevant `.agents/skills/*/SKILL.md`.
 - At phase start, state the phase scope, files expected to change, and what will remain out of scope.
 - During a phase, keep commits or change batches small enough to review. If the repo is under git, inspect status before and after work.
-- At phase completion, report changed files, tests run, skipped checks with reasons, and any follow-up risks.
-- Do not continue into the next phase in the same turn unless the user explicitly asks for that continuation.
+- At phase completion, report changed files, tests run, skipped checks with reasons, commit/push status, and any follow-up risks.
+- In Goal Mode, phase boundaries are audit checkpoints, not manual approval gates. Continue to the next phase automatically after successful validation, secret-safety checks, commit, and push.
 - If a phase discovers legal, source-access, schema, or secret-handling uncertainty, stop and ask before proceeding.
-- If a check requires optional tooling that is not installed, install only after user approval or report the missing tool and the command needed.
+- If validation or tooling fails, diagnose and attempt reasonable fixes within the active phase scope, then rerun validation. Stop only when the failure depends on external state, credentials, legal/source-access uncertainty, missing user decisions, unavailable required tooling that cannot be safely installed or worked around, or repeated failures that cannot be resolved without changing approved scope.
 
 ## Required Completion Commands
 

@@ -8,13 +8,9 @@ Codex must execute phases sequentially from Phase 0 through Phase 10, one phase 
 
 Within an explicitly approved Goal Mode run, the user pre-authorizes Codex to split the active phase into smaller internal stages. After each internal stage passes validation and secret-safety checks, Codex must automatically create a stage commit and push it to the current tracked branch.
 
-At every Phase 0 through Phase 10 boundary, Codex must stop for a mandatory review checkpoint after successful validation and any required checkpoint commit/push. Codex must wait for the user's explicit reply before starting the next phase:
+At every Phase 0 through Phase 10 boundary, Codex must perform a mandatory audit checkpoint after successful validation and any required checkpoint commit/push. In Goal Mode, the user pre-authorizes Codex to continue automatically to the next phase after that checkpoint passes.
 
-```text
-continue
-```
-
-Codex must not proceed to the next phase without that exact user approval. Internal stage commits within the current approved phase do not require additional user approval as long as validation passes and no forbidden files are included.
+Codex must stop only for a true blocker: failed validation that cannot be fixed within the active scope, external state, credentials, legal/source-access uncertainty, missing user decisions, unavailable required tooling that cannot be safely installed or worked around, forbidden files that cannot be safely excluded, or repeated failures that cannot be resolved without changing approved scope.
 
 ## Mandatory Phase Gate
 
@@ -49,9 +45,9 @@ Codex must not commit or push secrets, `.env`, runtime DB files, generated repor
 
 At each internal stage checkpoint, Codex must inspect changed files and summarize the diff before committing when practical. At each phase checkpoint, Codex must show changed files and summarize diffs before stopping for user review.
 
-After internal stage tests pass, Codex is pre-authorized to commit and push. After phase-boundary tests pass, Codex must complete any required checkpoint commit/push, then stop and wait for the user's review before moving to the next phase.
+After internal stage tests pass, Codex is pre-authorized to commit and push. After phase-boundary tests pass, Codex must complete any required checkpoint commit/push and then continue automatically to the next phase unless a true blocker is present.
 
-The user's Goal Mode approval authorizes internal stage commits and phase checkpoint commits within the active phase. User approval is still required before starting the next phase.
+The user's Goal Mode approval authorizes internal stage commits, phase checkpoint commits, and automatic phase-to-phase progression.
 
 Only after a successful commit should Codex push to the current tracked branch.
 
@@ -106,4 +102,4 @@ At the end of each phase, Codex must report:
 - Confirmation that no forbidden actions occurred.
 - Commit SHA and push status for automatic stage or phase checkpoint commits.
 - Remaining risks or follow-up notes.
-- A clear request for the user's `continue` reply before the next phase.
+- Whether Codex continued automatically to the next phase or stopped because of a true blocker.
