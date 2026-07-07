@@ -2,9 +2,64 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Quant Intel Brief</title>
+    <title>{{ report.title }}</title>
   </head>
-  <body>
-    <main data-email-template="daily-report"></main>
+  <body style="margin:0;background:#f5f7fa;color:#20242a;font-family:Arial,Helvetica,sans-serif;">
+    <main data-email-template="daily-report" style="max-width:760px;margin:0 auto;padding:24px;">
+      <header style="padding:18px 0 20px;border-bottom:1px solid #d8dee8;">
+        <p style="margin:0 0 8px;font-size:13px;color:#657085;">{{ report.report_date.isoformat() }}</p>
+        <h1 style="margin:0;font-size:28px;line-height:1.2;color:#111827;">{{ report.title }}</h1>
+        <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#4b5563;">
+          {{ report.source_coverage_note }}
+        </p>
+      </header>
+
+      {% for section in report.sections %}
+      <section data-section="{{ section.key }}" style="padding:22px 0;border-bottom:1px solid #e4e9f0;">
+        <h2 style="margin:0 0 14px;font-size:18px;line-height:1.3;color:#1f2937;">
+          {{ section.title }}
+        </h2>
+
+        {% if section.events %}
+          {% for event in section.events %}
+          <article style="margin:0 0 18px;padding:16px;background:#ffffff;border:1px solid #dfe5ee;border-radius:6px;">
+            <p style="margin:0 0 8px;font-size:12px;color:#6b7280;">
+              Score {{ "%.1f"|format(event.score) }}
+              {% if event.tickers %} | Tickers: {{ event.tickers|join(", ") }}{% endif %}
+              {% if event.assets %} | Assets: {{ event.assets|join(", ") }}{% endif %}
+            </p>
+            <h3 style="margin:0 0 10px;font-size:16px;line-height:1.35;color:#111827;">
+              {{ event.headline }}
+            </h3>
+            <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#374151;">
+              {{ event.factual_summary }}
+            </p>
+            <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#374151;">
+              <strong>Why it matters:</strong> {{ event.market_relevance }}
+            </p>
+            <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#4b5563;">
+              <strong>Uncertainty:</strong> {{ event.uncertainty }}
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#4b5563;">
+              Sources:
+              {% for url in event.source_urls %}
+                {% set source_label = event.source_ids[loop.index0] if loop.index0 < event.source_ids|length else "source" %}
+                <a href="{{ url }}" style="color:#1d4ed8;text-decoration:underline;">{{ source_label }}</a>{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+          </article>
+          {% endfor %}
+        {% else %}
+          <p style="margin:0;font-size:14px;line-height:1.5;color:#6b7280;">
+            No qualifying summarized events for this section.
+          </p>
+        {% endif %}
+      </section>
+      {% endfor %}
+
+      <footer style="padding:18px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">
+        This local brief is for research organization only and is not investment advice.
+      </footer>
+    </main>
   </body>
 </html>

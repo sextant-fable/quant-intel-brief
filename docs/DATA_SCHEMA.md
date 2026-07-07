@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata. Phase 5 adds deterministic event clusters, event-item relationships, and rule-based tags. Phase 6 adds ranked items with visible score components and explanations. Phase 7 adds structured LLM summary schemas without adding summary persistence tables.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata. Phase 5 adds deterministic event clusters, event-item relationships, and rule-based tags. Phase 6 adds ranked items with visible score components and explanations. Phase 7 adds structured LLM summary schemas without adding summary persistence tables. Phase 8 adds in-memory report payloads and email delivery result schemas before persistence wiring.
 
 ## Planned Core Entities
 
@@ -117,3 +117,11 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - Missing evidence produces an explicit insufficient-evidence result without calling an LLM.
 - Invalid citations or advisory language fail validation and preserve ranked-event context for review.
 - Phase 7 does not add report tables, email delivery, scheduler behavior, or dashboard business views.
+
+## Phase 8 Report Rules
+
+- `DailyReport`, `ReportSectionData`, and `ReportEvent` are in-memory report payload schemas.
+- Report events require source IDs and source URLs before rendering.
+- Failed or uncited summaries are skipped and reflected in the source coverage note.
+- Email delivery returns preview/dry-run or mocked provider results before any live delivery wiring.
+- Phase 8 does not add scheduler behavior or dashboard business views.

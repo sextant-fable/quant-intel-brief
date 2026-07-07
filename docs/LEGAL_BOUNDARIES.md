@@ -43,3 +43,10 @@ Ranking and heat scores are informational prioritization signals. They must not 
 - Summaries must cite only source IDs and URLs that were passed into the prompt.
 - Missing or ambiguous evidence must remain explicit instead of being filled in by inference.
 - LLM output must not include buy/sell/hold instructions, price targets, or portfolio allocation advice.
+
+## Report And Email Boundary
+
+- Reports must render only source-grounded summaries and links.
+- Failed, uncited, or insufficient-evidence summaries must not be promoted into report claims.
+- Email delivery must default to preview/dry-run behavior until explicitly configured by the user.
+- Generated reports and delivery artifacts are local runtime outputs and must not be committed.

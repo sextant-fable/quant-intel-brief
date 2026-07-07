@@ -91,6 +91,16 @@ pytest tests/test_llm_summarization.py
 
 Tests must use fake clients and make no real LLM calls. Local future runs may use `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`, but those values must stay in `.env` and never be committed.
 
+## Phase 8 Report And Email Checks
+
+Daily HTML report rendering and email preview/dry-run behavior are covered by:
+
+```bash
+pytest tests/test_report_generation.py tests/test_email_sender.py
+```
+
+Email tests use fake SMTP and `httpx.MockTransport` only. Do not send real email in tests, and do not commit generated reports from `data/reports/`.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.

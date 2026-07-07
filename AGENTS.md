@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-Phase 7 DeepSeek-compatible structured summarization is implemented with mocked tests. Do not implement report generation, email delivery, scheduling, or dashboard business views until the relevant phase in `PLANS.md`.
+Phase 8 daily HTML report generation and email preview/dry-run delivery are implemented with mocked tests. Do not implement scheduling or dashboard business views until the relevant phase in `PLANS.md`.
 
 ## Repository Layout
 

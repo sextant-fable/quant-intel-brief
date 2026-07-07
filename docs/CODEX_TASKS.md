@@ -30,9 +30,9 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement conservative ticker, asset, source, and quant-theme tagging baseline.
 - [x] Implement ranking baseline.
 - [x] Implement DeepSeek-compatible structured summarization with mocked tests.
-- [ ] Implement report generation from fixtures only.
+- [x] Implement report generation from fixtures only.
 - [ ] Implement dashboard route from fixtures.
-- [ ] Implement email preview before sending.
+- [x] Implement email preview before sending.
 
 ## Phase 0 Done Criteria
 
@@ -98,3 +98,12 @@ Use this document to break future work into safe implementation tasks.
 - Structured summary output validates source IDs, URLs, uncertainty, and insufficient-evidence handling.
 - Tests use fake clients and make no real external API calls.
 - No report generation, email delivery, scheduler behavior, or dashboard business views are implemented.
+
+## Phase 8 Done Criteria
+
+- HTML email reports render from fixture summary results.
+- Report sections are deterministic and source citations are required for rendered events.
+- Empty reports and skipped failed/uncited summaries render safely.
+- Email preview/dry-run runs without network calls.
+- SMTP and Resend provider paths are tested with mocks only.
+- No scheduler behavior, real email sending in tests, or dashboard business views are implemented.
