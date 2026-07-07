@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-Phase 8 daily HTML report generation and email preview/dry-run delivery are implemented with mocked tests. Do not implement scheduling or dashboard business views until the relevant phase in `PLANS.md`.
+Phase 9 local FastAPI dashboard views are implemented with route and template tests. Do not implement scheduling or automated workflow execution until the relevant phase in `PLANS.md`.
 
 ## Repository Layout
 

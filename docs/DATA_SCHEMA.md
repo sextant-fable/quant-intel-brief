@@ -125,3 +125,10 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - Failed or uncited summaries are skipped and reflected in the source coverage note.
 - Email delivery returns preview/dry-run or mocked provider results before any live delivery wiring.
 - Phase 8 does not add scheduler behavior or dashboard business views.
+
+## Phase 9 Dashboard Rules
+
+- Dashboard views read existing local `ContentItem`, `Report`, `ReportSection`, and `SourceStatus` rows.
+- Feed filters run against local normalized metadata only.
+- Source status messages are redacted before JSON or HTML rendering.
+- Phase 9 does not add new tables, external calls, email sending, or scheduler behavior.

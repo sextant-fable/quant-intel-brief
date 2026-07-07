@@ -8,14 +8,14 @@ Build a daily intelligence brief system for quantitative-finance research, marke
 
 Local-first personal tool with SQLite storage, explicit user-managed credentials, a simple server-rendered dashboard, and optional email delivery.
 
-## Non-Goals Through Phase 8
+## Non-Goals Through Phase 9
 
 - No automatic live source collection.
 - No real LLM calls in tests.
 - No real email sending in tests.
 - No automated or scheduled email delivery.
 - No production deployment.
-- No real dashboard business views.
+- No dashboard action that triggers external collection, LLM calls, or email sending.
 - No premium full-text storage or paywall/browser automation.
 
 ## Planned Users
@@ -43,5 +43,5 @@ Local-first personal tool with SQLite storage, explicit user-managed credentials
 8. Phase 6: deterministic ranking and heat scoring.
 9. Phase 7: DeepSeek-compatible structured summarization with mocked tests.
 10. Phase 8: daily HTML report generation and email preview/dry-run delivery.
-11. Dashboard and email delivery.
+11. Phase 9: local FastAPI dashboard views for local data.
 12. QA, observability, and operational runbook.

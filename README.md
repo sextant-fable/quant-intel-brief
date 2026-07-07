@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 8 daily HTML report generation and email preview/dry-run delivery are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, and fixture-rendered reports. Scheduling and dashboard business views are intentionally not implemented yet.
+Phase 9 local FastAPI dashboard views are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, and local dashboard pages. Scheduling and automated workflow execution are intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -44,13 +44,18 @@ Run the local app shell with:
 uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Available fixture-only system routes:
+Available local routes:
 
 - `GET /health`
 - `GET /status/sources`
 - `GET /settings/public`
+- `GET /dashboard/today`
+- `GET /feed`
+- `GET /reports`
+- `GET /reports/{report_id}`
+- `GET /sources`
 
-Collectors do not run automatically from the app shell. Phase 1 through Phase 3 adapters are exercised through tests and future job wiring.
+Collectors do not run automatically from the app shell. Dashboard pages read only local database data.
 
 ## Repository Layout
 
@@ -65,4 +70,4 @@ Collectors do not run automatically from the app shell. Phase 1 through Phase 3 
 
 ## Status
 
-Phase 8 is complete. The next milestone is Phase 9: local dashboard report views.
+Phase 9 is complete. The next milestone is Phase 10: workflow jobs, cleanup, and scheduler boundaries.

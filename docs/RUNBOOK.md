@@ -101,6 +101,16 @@ pytest tests/test_report_generation.py tests/test_email_sender.py
 
 Email tests use fake SMTP and `httpx.MockTransport` only. Do not send real email in tests, and do not commit generated reports from `data/reports/`.
 
+## Phase 9 Dashboard Checks
+
+Local dashboard routes, filters, static assets, and source status redaction are covered by:
+
+```bash
+pytest tests/test_dashboard_routes.py
+```
+
+Dashboard pages read the local database only. They must not trigger collectors, LLM calls, email delivery, or scheduler jobs.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.

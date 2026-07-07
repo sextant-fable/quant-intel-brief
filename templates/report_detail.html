@@ -1,5 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Report - Quant Intel Brief{% endblock %}
+{% block title %}{{ view.report.title }} - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
-<main data-page="report-detail"></main>
+<main class="shell" data-page="report-detail">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">{{ view.report.report_date }}</p>
+      <h1>{{ view.report.title }}</h1>
+    </div>
+    <p class="timestamp">{{ view.report.status }}</p>
+  </section>
+
+  {% if view.report.source_coverage_note %}
+    <p class="notice">{{ view.report.source_coverage_note }}</p>
+  {% endif %}
+
+  {% if view.sections %}
+    {% for section in view.sections %}
+    <section class="report-section">
+      <h2>{{ section.title }}</h2>
+      {% if section.content %}<p>{{ section.content }}</p>{% endif %}
+      {% if section.source_refs %}
+        <p class="tags">
+          {% for source_ref in section.source_refs %}<span>{{ source_ref }}</span>{% endfor %}
+        </p>
+      {% endif %}
+    </section>
+    {% endfor %}
+  {% else %}
+    <p class="empty-state">This report has no local sections yet.</p>
+  {% endif %}
+</main>
 {% endblock %}

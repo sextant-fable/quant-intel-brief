@@ -1,5 +1,105 @@
 {% extends "base.html" %}
-{% block title %}Today - Quant Intel Brief{% endblock %}
+{% block title %}Today - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
-<main data-page="dashboard-today"></main>
+<main class="shell" data-page="dashboard-today">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Local dashboard</p>
+      <h1>Today</h1>
+    </div>
+    <p class="timestamp">Updated {{ view.generated_at }}</p>
+  </section>
+
+  <section class="metrics" aria-label="Summary">
+    <div class="metric">
+      <span class="metric-value">{{ view.counts.items }}</span>
+      <span class="metric-label">Items</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value">{{ view.counts.reports }}</span>
+      <span class="metric-label">Reports</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value">{{ view.counts.sources }}</span>
+      <span class="metric-label">Sources</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value">{{ view.counts.source_failures }}</span>
+      <span class="metric-label">Failures</span>
+    </div>
+  </section>
+
+  <section class="grid-two">
+    <div>
+      <div class="section-heading">
+        <h2>Recent Feed</h2>
+        <a href="/feed">Open feed</a>
+      </div>
+      {% if view.recent_items %}
+        <ul class="item-list">
+          {% for item in view.recent_items %}
+          <li>
+            <a class="item-title" href="{{ item.url }}">{{ item.title }}</a>
+            <p class="item-meta">{{ item.source_name }}{% if item.published_at %} | {{ item.published_at }}{% endif %}</p>
+            {% if item.summary %}<p class="item-summary">{{ item.summary }}</p>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">No local content items yet.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <div class="section-heading">
+        <h2>Latest Reports</h2>
+        <a href="/reports">Archive</a>
+      </div>
+      {% if view.latest_reports %}
+        <ul class="item-list">
+          {% for report in view.latest_reports %}
+          <li>
+            <a class="item-title" href="/reports/{{ report.id }}">{{ report.title }}</a>
+            <p class="item-meta">{{ report.report_date }} | {{ report.status }}</p>
+            {% if report.source_coverage_note %}<p class="item-summary">{{ report.source_coverage_note }}</p>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">No local reports have been generated yet.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-heading">
+      <h2>Source Status</h2>
+      <a href="/sources">All sources</a>
+    </div>
+    {% if view.source_statuses %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Status</th>
+              <th>Last Checked</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for status in view.source_statuses %}
+            <tr>
+              <td>{{ status.source_name }}</td>
+              <td><span class="status {% if status.is_failure %}status-failed{% else %}status-ok{% endif %}">{{ status.status }}</span></td>
+              <td>{{ status.last_checked_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty-state">No source status records yet.</p>
+    {% endif %}
+  </section>
+</main>
 {% endblock %}

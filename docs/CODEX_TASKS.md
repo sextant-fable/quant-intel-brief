@@ -31,7 +31,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement ranking baseline.
 - [x] Implement DeepSeek-compatible structured summarization with mocked tests.
 - [x] Implement report generation from fixtures only.
-- [ ] Implement dashboard route from fixtures.
+- [x] Implement dashboard route from fixtures.
 - [x] Implement email preview before sending.
 
 ## Phase 0 Done Criteria
@@ -107,3 +107,11 @@ Use this document to break future work into safe implementation tasks.
 - Email preview/dry-run runs without network calls.
 - SMTP and Resend provider paths are tested with mocks only.
 - No scheduler behavior, real email sending in tests, or dashboard business views are implemented.
+
+## Phase 9 Done Criteria
+
+- Local dashboard routes render from empty and fixture-backed SQLite data.
+- Feed filters cover date, source, ticker, asset class, and quant theme.
+- Source status JSON and HTML redact secret-like values.
+- Static assets are served locally.
+- No external collection, LLM calls, real email sending, or scheduler behavior is triggered by dashboard routes.

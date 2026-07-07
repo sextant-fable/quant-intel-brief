@@ -50,3 +50,9 @@ Ranking and heat scores are informational prioritization signals. They must not 
 - Failed, uncited, or insufficient-evidence summaries must not be promoted into report claims.
 - Email delivery must default to preview/dry-run behavior until explicitly configured by the user.
 - Generated reports and delivery artifacts are local runtime outputs and must not be committed.
+
+## Dashboard Boundary
+
+- Dashboard pages must render local metadata and generated summaries only.
+- Source status messages must be redacted before display.
+- Dashboard interactions must not bypass source access rules or trigger live external calls.

@@ -1,5 +1,48 @@
 {% extends "base.html" %}
-{% block title %}Feed - Quant Intel Brief{% endblock %}
+{% block title %}Feed - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
-<main data-page="feed"></main>
+<main class="shell" data-page="feed">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Normalized items</p>
+      <h1>Feed</h1>
+    </div>
+    <p class="timestamp">{{ view.item_count }} item{{ "" if view.item_count == 1 else "s" }}</p>
+  </section>
+
+  <form class="filters" action="/feed" method="get">
+    <label>Date <input name="date" type="date" value="{{ view.filters.date or "" }}"></label>
+    <label>Source <input name="source" value="{{ view.filters.source or "" }}"></label>
+    <label>Ticker <input name="ticker" value="{{ view.filters.ticker or "" }}"></label>
+    <label>Asset <input name="asset_class" value="{{ view.filters.asset_class or "" }}"></label>
+    <label>Theme <input name="quant_theme" value="{{ view.filters.quant_theme or "" }}"></label>
+    <button type="submit">Apply</button>
+    {% if view.has_active_filters %}<a class="button-secondary" href="/feed">Clear</a>{% endif %}
+  </form>
+
+  {% if view.filters.errors %}
+    <div class="notice">
+      {% for error in view.filters.errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  {% if view.feed_items %}
+    <ul class="item-list">
+      {% for item in view.feed_items %}
+      <li>
+        <a class="item-title" href="{{ item.url }}">{{ item.title }}</a>
+        <p class="item-meta">{{ item.source_name }}{% if item.published_at %} | {{ item.published_at }}{% endif %}</p>
+        {% if item.summary %}<p class="item-summary">{{ item.summary }}</p>{% endif %}
+        <p class="tags">
+          {% for ticker in item.tickers %}<span>{{ ticker }}</span>{% endfor %}
+          {% for asset in item.assets %}<span>{{ asset }}</span>{% endfor %}
+          {% for topic in item.quant_topics %}<span>{{ topic }}</span>{% endfor %}
+        </p>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty-state">No local content items match the current filters.</p>
+  {% endif %}
+</main>
 {% endblock %}

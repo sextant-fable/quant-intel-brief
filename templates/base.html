@@ -3,10 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Quant Intel Brief{% endblock %}</title>
+    <title>{% block title %}{{ settings.dashboard_title }}{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/main.css">
   </head>
   <body>
+    <header class="topbar">
+      <a class="brand" href="/dashboard/today">{{ settings.dashboard_title }}</a>
+      <nav class="nav" aria-label="Primary">
+        <a href="/dashboard/today">Today</a>
+        <a href="/feed">Feed</a>
+        <a href="/reports">Reports</a>
+        <a href="/sources">Sources</a>
+      </nav>
+    </header>
     {% block body %}{% endblock %}
     <script src="/static/js/main.js"></script>
   </body>

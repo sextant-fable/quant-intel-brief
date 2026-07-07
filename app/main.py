@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.engine import Engine
 
 from app.core.config import Settings, get_settings
@@ -22,6 +25,11 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app = FastAPI(title=active_settings.dashboard_title)
     app.state.settings = active_settings
     app.state.engine = active_engine
+    app.mount(
+        "/static",
+        StaticFiles(directory=Path(__file__).resolve().parents[1] / "static"),
+        name="static",
+    )
     register_routes(app, active_settings)
     return app
 
