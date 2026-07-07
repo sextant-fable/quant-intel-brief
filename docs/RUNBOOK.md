@@ -61,6 +61,16 @@ pytest tests/test_extraction_boundaries.py
 
 Article extraction defaults to metadata-only behavior. Full-text storage attempts should raise an error instead of silently persisting content.
 
+## Phase 5 Dedup And Tagging Checks
+
+Event clustering and rule-based tagging are covered by:
+
+```bash
+pytest tests/test_dedup.py tests/test_enrichers.py
+```
+
+The Phase 5 baseline is deterministic and conservative. It does not rank events, call an LLM, generate reports, or drive dashboard business views.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.

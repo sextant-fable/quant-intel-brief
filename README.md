@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 4 normalization, extraction boundaries, and storage hygiene are implemented. The app has metadata-only collectors through Phase 3 plus deterministic URL canonicalization, safe compact-excerpt extraction boundaries, source references, payload hashes, and 30-day retention metadata. Business pipeline logic is intentionally not implemented yet.
+Phase 5 deterministic event deduplication and rule-based tagging are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, event clustering, event-item relationships, and conservative ticker/asset/quant-theme/source tags. Ranking, LLM summaries, reports, email, scheduling, and dashboard business views are intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -65,4 +65,4 @@ Collectors do not run automatically from the app shell. Phase 1 through Phase 3 
 
 ## Status
 
-Phase 4 is complete. The next milestone is Phase 5: event deduplication and tagging.
+Phase 5 is complete. The next milestone is Phase 6: ranking and heat.

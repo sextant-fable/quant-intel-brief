@@ -26,7 +26,8 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add deterministic URL canonicalization tests.
 - [x] Add compact excerpt and no-full-text extraction boundary tests.
 - [x] Add source reference, payload hash, and retention metadata persistence tests.
-- [ ] Implement deduplication baseline.
+- [x] Implement deduplication baseline.
+- [x] Implement conservative ticker, asset, source, and quant-theme tagging baseline.
 - [ ] Implement ranking baseline.
 - [ ] Implement report generation from fixtures only.
 - [ ] Implement dashboard route from fixtures.
@@ -70,3 +71,12 @@ Use this document to break future work into safe implementation tasks.
 - Compact excerpts are sanitized and bounded when explicitly permitted.
 - Raw and content items persist metadata-only storage policy, source references, payload hashes, and 30-day retention timestamps.
 - No dedup clustering, enrichment, ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.
+
+## Phase 5 Done Criteria
+
+- Exact duplicate and near-duplicate content items cluster deterministically.
+- Distinct events remain separate.
+- Event-item relationships include confidence and provenance.
+- Source, ticker, asset, and quant-theme tags include confidence and provenance.
+- Ticker ambiguity is handled conservatively.
+- No ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.

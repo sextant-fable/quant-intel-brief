@@ -124,10 +124,34 @@ class Cluster(SQLModel, table=True):
 
     id: str = Field(default_factory=new_id, primary_key=True)
     canonical_title: str
+    event_fingerprint: str | None = Field(default=None, index=True)
+    canonical_url: str | None = Field(default=None, index=True)
     summary: str | None = None
     item_ids: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    source_names: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    tickers: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    assets: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    quant_topics: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=utc_now, nullable=False)
     updated_at: datetime | None = None
+
+
+class EventItem(SQLModel, table=True):
+    """Relationship between a deduplicated event cluster and content item."""
+
+    __tablename__: ClassVar[str] = "event_items"
+    __table_args__: ClassVar[tuple[UniqueConstraint, ...]] = (
+        UniqueConstraint("cluster_id", "item_id", name="uq_event_items_cluster_item"),
+    )
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    cluster_id: str = Field(foreign_key="clusters.id", index=True)
+    item_id: str = Field(foreign_key="content_items.id", index=True)
+    source_name: str = Field(index=True)
+    relation: str = "member"
+    confidence: float = 1.0
+    provenance: str = "dedup_rule"
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
 
 
 class RankedItem(SQLModel, table=True):
@@ -205,6 +229,7 @@ __all__ = [
     "ContentItem",
     "DeliveryLog",
     "EntityTag",
+    "EventItem",
     "RankedItem",
     "RawItem",
     "Report",

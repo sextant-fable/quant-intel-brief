@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata. Phase 5 adds deterministic event clusters, event-item relationships, and rule-based tags.
 
 ## Planned Core Entities
 
@@ -9,6 +9,7 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `ContentItem`: normalized article, post, filing, paper, video, or dataset signal.
 - `EntityTag`: ticker, asset, organization, person, market, or topic.
 - `Cluster`: deduplicated group of related items.
+- `EventItem`: relationship between a cluster and a content item.
 - `RankedItem`: item or cluster with ranking score and explanation.
 - `Report`: generated daily brief.
 - `ReportSection`: grouped report content.
@@ -60,6 +61,7 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `report_sections`
 - `delivery_logs`
 - `source_statuses`
+- `event_items`
 
 ## Phase 1 Persistence Rules
 
@@ -92,3 +94,11 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - Raw and content items include source-reference metadata with URL, canonical URL, and payload hash.
 - Raw and content items include `retain_for_days=30` and `retention_until` for local history cleanup.
 - Article extraction defaults to no text extraction and refuses full-text storage requests.
+
+## Phase 5 Event And Tagging Rules
+
+- `Cluster` stores deterministic event fingerprints, canonical URL, member item IDs, source names, and aggregate tags.
+- `EventItem` stores event-to-content-item membership with confidence and provenance.
+- `EntityTag` records source, ticker, asset, and quant-theme tags with confidence and rule provenance.
+- Ticker extraction is conservative and ignores ambiguous uppercase terms unless they are known tickers or explicit cashtags.
+- Tagging is rule-based only; no LLM tagging is used in Phase 5.
