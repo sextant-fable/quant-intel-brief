@@ -56,3 +56,9 @@ Ranking and heat scores are informational prioritization signals. They must not 
 - Dashboard pages must render local metadata and generated summaries only.
 - Source status messages must be redacted before display.
 - Dashboard interactions must not bypass source access rules or trigger live external calls.
+
+## Operations Boundary
+
+- Scheduled jobs must stay disabled unless the user explicitly enables them locally.
+- Cleanup must not preserve premium full text, cookies, tokens, local browser profiles, or private artifacts.
+- Daily jobs must not send email unless recipients and provider configuration are explicitly supplied.

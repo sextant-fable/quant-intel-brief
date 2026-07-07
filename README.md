@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 9 local FastAPI dashboard views are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, and local dashboard pages. Scheduling and automated workflow execution are intentionally not implemented yet.
+Phase 10 local job orchestration, retention cleanup, and optional scheduler boundaries are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, local dashboard pages, and tested local operations jobs.
 
 ## Intended Workflow
 
@@ -57,6 +57,14 @@ Available local routes:
 
 Collectors do not run automatically from the app shell. Dashboard pages read only local database data.
 
+Run one local empty daily job manually with:
+
+```bash
+python -m app.jobs.run_daily
+```
+
+The manual job creates a local draft report by default. It does not run live collectors, call an LLM, or send email unless future code passes explicit configured inputs.
+
 ## Repository Layout
 
 - `.agents/skills/`: local Codex skill instructions for source adapters, report checks, and dashboard QA.
@@ -70,4 +78,4 @@ Collectors do not run automatically from the app shell. Dashboard pages read onl
 
 ## Status
 
-Phase 9 is complete. The next milestone is Phase 10: workflow jobs, cleanup, and scheduler boundaries.
+Phase 10 is complete. The next milestone is selected from `PLANS.md` Future Backlog after review.

@@ -33,6 +33,9 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement report generation from fixtures only.
 - [x] Implement dashboard route from fixtures.
 - [x] Implement email preview before sending.
+- [x] Implement local daily job orchestration.
+- [x] Implement 30-day retention cleanup.
+- [x] Implement disabled-by-default scheduler wiring.
 
 ## Phase 0 Done Criteria
 
@@ -115,3 +118,11 @@ Use this document to break future work into safe implementation tasks.
 - Source status JSON and HTML redact secret-like values.
 - Static assets are served locally.
 - No external collection, LLM calls, real email sending, or scheduler behavior is triggered by dashboard routes.
+
+## Phase 10 Done Criteria
+
+- Manual daily run orchestration works with injected fixture collector and summary results.
+- Partial source failures are recorded as noncritical coverage notes.
+- Retention cleanup preserves only the configured history window.
+- Scheduler wiring is disabled by default and creates jobs only when explicitly enabled.
+- Tests do not make external API calls or send real email.

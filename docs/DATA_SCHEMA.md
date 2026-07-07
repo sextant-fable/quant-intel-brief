@@ -132,3 +132,10 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - Feed filters run against local normalized metadata only.
 - Source status messages are redacted before JSON or HTML rendering.
 - Phase 9 does not add new tables, external calls, email sending, or scheduler behavior.
+
+## Phase 10 Operations Rules
+
+- Daily job orchestration persists local `Report`, `ReportSection`, and optional `DeliveryLog` rows.
+- Manual runs accept injected collector and summary results; default command runs without external calls.
+- Retention cleanup removes expired local rows while preserving the configured history window.
+- Scheduler wiring is optional and disabled unless `ENABLE_SCHEDULER=true`.

@@ -111,6 +111,22 @@ pytest tests/test_dashboard_routes.py
 
 Dashboard pages read the local database only. They must not trigger collectors, LLM calls, email delivery, or scheduler jobs.
 
+## Phase 10 Operations Checks
+
+Daily job orchestration, retention cleanup, and scheduler boundaries are covered by:
+
+```bash
+pytest tests/test_jobs.py
+```
+
+Run a local empty daily job manually with:
+
+```bash
+python -m app.jobs.run_daily
+```
+
+The default manual command creates a local draft report without live collectors, LLM calls, or email sending. Scheduler wiring is disabled unless `ENABLE_SCHEDULER=true`; use `DAILY_RUN_TIME=HH:MM` and `RETENTION_DAYS=30` for local operations tuning.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.

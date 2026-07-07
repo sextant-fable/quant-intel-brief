@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     max_items_per_source: int = 200
     http_retry_attempts: int = 2
     http_retry_backoff_seconds: int = 1
+    retention_days: int = 30
+    enable_scheduler: bool = False
+    daily_run_time: str = "07:00"
     store_full_text: bool = False
     enable_premium_browser: bool = False
 
@@ -78,6 +81,9 @@ class Settings(BaseSettings):
             "database_url": self._redact_database_url(self.database_url),
             "dashboard_base_url": self.dashboard_base_url,
             "dashboard_title": self.dashboard_title,
+            "enable_scheduler": self.enable_scheduler,
+            "daily_run_time": self.daily_run_time,
+            "retention_days": self.retention_days,
             "store_full_text": self.store_full_text,
             "enable_premium_browser": self.enable_premium_browser,
         }
