@@ -1,0 +1,10 @@
+[project]
+name = "quant-intel-brief"
+description = "Daily quantitative-finance intelligence brief scaffold."
+
+[agent]
+primary_instructions = "Follow AGENTS.md. Keep this repository in scaffold mode until implementation is requested."
+
+[checks]
+lint = "ruff check ."
+tests = "pytest"

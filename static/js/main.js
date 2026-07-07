@@ -1,0 +1,1 @@
+window.QuantIntelBrief = window.QuantIntelBrief || {};
