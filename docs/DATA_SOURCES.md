@@ -10,15 +10,15 @@ This document tracks planned source adapters and their legal/technical requireme
 | Alpha Vantage | `app/collectors/alphavantage.py` | Phase 2 implemented | API key | Metadata-only `NEWS_SENTIMENT` adapter. Use only permitted endpoints. |
 | Finnhub | `app/collectors/finnhub.py` | Phase 2 implemented | API key | Metadata-only market news adapter. Check plan limits. |
 | GitHub | `app/collectors/github.py` | Phase 2 implemented | Token optional | Metadata-only repository search adapter. Use API terms-compliant access. |
-| Reddit | `app/collectors/reddit.py` | Scaffold | OAuth | Respect subreddit and API rules. |
-| YouTube | `app/collectors/youtube.py` | Scaffold | API key | Metadata only unless transcript use is permitted. |
-| X API | `app/collectors/x_api.py` | Scaffold | Bearer token | Follow API and redistribution terms. |
+| Reddit | `app/collectors/reddit.py` | Phase 3 implemented | OAuth | Metadata-only post adapter. Respect subreddit and API rules. |
+| YouTube | `app/collectors/youtube.py` | Phase 3 implemented | API key | Metadata-only video search adapter; transcripts are not collected. |
+| X API | `app/collectors/x_api.py` | Phase 3 implemented | Bearer token | Metadata-only recent-search adapter. Follow API and redistribution terms. |
 | arXiv | `app/collectors/arxiv.py` | Phase 2 implemented | Public API | Preserve paper IDs and links; do not download PDFs. |
 | SEC EDGAR | `app/collectors/sec_edgar.py` | Phase 2 implemented | User agent | Metadata-only submissions JSON adapter. Follow SEC fair-access policy. |
 | FRED | `app/collectors/fred.py` | Phase 2 implemented | API key | Metadata-only macro observation adapter. |
-| Stack Exchange | `app/collectors/stackexchange.py` | Scaffold | API key optional | Developer signal source. |
-| QuantConnect | `app/collectors/quantconnect.py` | Scaffold | Token | Confirm permitted endpoints. |
-| Premium Browser | `app/collectors/premium_browser.py` | Scaffold | User-authorized | No paywall bypass or redistribution. |
+| Stack Exchange | `app/collectors/stackexchange.py` | Phase 3 implemented | API key optional | Disabled by default; metadata-only question search adapter. |
+| QuantConnect | `app/collectors/quantconnect.py` | Phase 3 implemented | User ID and token | Metadata-only project adapter. Confirm permitted endpoints before live use. |
+| Premium Browser | `app/collectors/premium_browser.py` | Phase 3 implemented | User-authorized | Disabled by default; accepts metadata records only. No paywall bypass or redistribution. |
 
 ## Source Rules
 
@@ -43,3 +43,12 @@ This document tracks planned source adapters and their legal/technical requireme
 - All tests use fixture responses and `respx`; no live API calls are made in tests.
 - Stored records are source IDs, canonical links, publication/fetch timestamps, compact excerpts or summaries, and safe metadata only.
 - These collectors are not scheduled and are not wired to dashboard actions yet.
+
+## Phase 3 Social, Community, Video, And Premium Behavior
+
+- Implemented adapters: Reddit, YouTube, X API, Stack Exchange, QuantConnect, and premium metadata intake.
+- Reddit, YouTube, X, and QuantConnect fail before HTTP unless required local credentials are configured.
+- Stack Exchange is API-key optional but disabled by default to avoid accidental community-source calls.
+- Premium metadata intake is disabled by default and requires explicit authorization for each configured run.
+- Premium metadata rejects full-text fields such as article bodies, transcripts, HTML, Markdown, or exported content.
+- Tests use fixtures and `respx`; no live social, video, community, premium, or platform API calls are made in tests.

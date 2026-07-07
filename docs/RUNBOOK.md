@@ -39,7 +39,7 @@ These routes expose only local system/status information. They do not run collec
 
 ## Collector Checks
 
-The RSS adapter and Phase 2 public/official API adapters are available as library components and are covered by fixture/mocked tests:
+The RSS adapter and Phase 2/3 collectors are available as library components and are covered by fixture/mocked tests:
 
 ```bash
 pytest tests/test_collectors.py
@@ -47,7 +47,9 @@ pytest tests/test_collectors.py
 
 Collectors are not wired to a scheduler or dashboard action yet. Do not use live feeds in tests; add local fixtures or `respx` mocks instead.
 
-Phase 2 adapters may require local `.env` credentials for real personal runs later, but no live-run command is provided yet. Missing keys or SEC user-agent settings should return collector failure states before HTTP is attempted.
+Phase 2 and Phase 3 adapters may require local `.env` credentials for real personal runs later, but no live-run command is provided yet. Missing keys, user-agent settings, access tokens, or user IDs should return collector failure states before HTTP is attempted.
+
+Premium metadata intake is disabled by default. For tests and future local runs, it accepts explicit metadata records only and rejects body/content/transcript/HTML/Markdown fields.
 
 ## Incident Notes
 

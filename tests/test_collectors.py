@@ -23,10 +23,17 @@ from app.collectors.fred import FredCollector
 from app.collectors.gdelt import GdeltCollector
 from app.collectors.github import GitHubCollector
 from app.collectors.newsapi import NewsApiCollector
+from app.collectors.premium_browser import PremiumBrowserCollector
+from app.collectors.quantconnect import QuantConnectCollector
+from app.collectors.reddit import RedditCollector
 from app.collectors.rss import RssCollector
 from app.collectors.sec_edgar import SecEdgarCollector
+from app.collectors.stackexchange import StackExchangeCollector
+from app.collectors.x_api import XApiCollector
+from app.collectors.youtube import YouTubeCollector
 from app.db.models import ContentItem, RawItem, Source, SourceStatus
 from app.db.session import create_db_engine, init_db
+from app.extractors.premium_extractor import PremiumExtractionError, PremiumMetadataExtractor
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FORBIDDEN_TEXT_KEYS = {"body", "content", "full_text", "article_text", "transcript"}
@@ -350,3 +357,226 @@ async def _collect_from_fixture_data(
     with respx.mock:
         respx.get(endpoint).mock(return_value=httpx.Response(200, json=data))
         return await collector.collect()
+
+
+def _phase3_config() -> CollectorConfig:
+    return CollectorConfig(max_items=5, retry_attempts=0, retry_backoff_seconds=0)
+
+
+def _phase3_http_cases() -> list[tuple[str, SourceCollector, str, str, str]]:
+    config = _phase3_config()
+    return [
+        (
+            "reddit",
+            RedditCollector(
+                access_token="fixture-token",
+                user_agent="quant-intel-test",
+                config=config,
+            ),
+            "https://oauth.reddit.com/search",
+            "reddit_search.json",
+            "How are people monitoring intraday factor drift?",
+        ),
+        (
+            "youtube",
+            YouTubeCollector(api_key="fixture-key", config=config),
+            "https://www.googleapis.com/youtube/v3/search",
+            "youtube_search.json",
+            "Quant researcher explains volatility surface monitoring",
+        ),
+        (
+            "x_api",
+            XApiCollector(bearer_token="fixture-token", config=config),
+            "https://api.x.com/2/tweets/search/recent",
+            "x_recent_search.json",
+            "Monitoring ETF microstructure signals before the open.",
+        ),
+        (
+            "stackexchange",
+            StackExchangeCollector(enabled=True, config=config),
+            "https://api.stackexchange.com/2.3/search/advanced",
+            "stackexchange_search.json",
+            "How to validate a factor model with rolling windows?",
+        ),
+        (
+            "quantconnect",
+            QuantConnectCollector(
+                user_id="fixture-user",
+                api_token="fixture-token",
+                config=config,
+            ),
+            "https://www.quantconnect.com/api/v2/projects/read",
+            "quantconnect_projects.json",
+            "Fixture intraday equity research",
+        ),
+    ]
+
+
+def _premium_metadata_record() -> dict[str, Any]:
+    return {
+        "source_item_id": "premium-1",
+        "url": "https://premium.example.test/items/premium-1",
+        "title": "Premium metadata item about market structure",
+        "summary": "Short user-provided premium metadata summary.",
+        "excerpt": "Compact user-provided premium excerpt.",
+        "author": "Premium Desk",
+        "publisher": "Example Premium",
+        "published_at": "2026-07-07T13:30:00Z",
+        "source_name": "example_premium",
+        "tags": ["market-structure"],
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("case_name", "collector", "endpoint", "fixture_name", "expected_title"),
+    _phase3_http_cases(),
+    ids=[case[0] for case in _phase3_http_cases()],
+)
+@respx.mock
+async def test_phase3_collectors_parse_success_from_mocked_responses(
+    case_name: str,
+    collector: SourceCollector,
+    endpoint: str,
+    fixture_name: str,
+    expected_title: str,
+) -> None:
+    response_text = (FIXTURES / fixture_name).read_text(encoding="utf-8")
+    respx.get(endpoint).mock(return_value=httpx.Response(200, text=response_text))
+
+    result = await collector.collect()
+
+    assert result.source_name == case_name
+    assert result.status == CollectorStatus.SUCCESS
+    assert len(result.items) == 1
+    item = result.items[0]
+    assert item.title == expected_title
+    assert item.source_item_id
+    assert item.canonical_url is not None
+    assert item.canonical_url.startswith("https://")
+    assert item.raw_payload_hash
+    assert FORBIDDEN_TEXT_KEYS.isdisjoint(item.raw_metadata)
+    assert not hasattr(item, "content_text")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "collector",
+    [
+        RedditCollector(config=_phase3_config()),
+        YouTubeCollector(config=_phase3_config()),
+        XApiCollector(config=_phase3_config()),
+        StackExchangeCollector(config=_phase3_config()),
+        QuantConnectCollector(config=_phase3_config()),
+    ],
+    ids=["reddit", "youtube", "x_api", "stackexchange", "quantconnect"],
+)
+async def test_phase3_collectors_fail_before_http_when_not_configured(
+    collector: SourceCollector,
+) -> None:
+    result = await collector.collect()
+
+    assert result.status == CollectorStatus.FAILED
+    assert result.items == []
+    assert "required" in (result.message or "") or "disabled" in (result.message or "")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("case_name", "collector", "endpoint", "_fixture_name", "_expected_title"),
+    _phase3_http_cases(),
+    ids=[case[0] for case in _phase3_http_cases()],
+)
+@respx.mock
+async def test_phase3_collectors_report_forbidden_access(
+    case_name: str,
+    collector: SourceCollector,
+    endpoint: str,
+    _fixture_name: str,
+    _expected_title: str,
+) -> None:
+    respx.get(endpoint).mock(return_value=httpx.Response(403, text="forbidden"))
+
+    result = await collector.collect()
+
+    assert result.source_name == case_name
+    assert result.status == CollectorStatus.FAILED
+    assert result.items == []
+    assert "403" in (result.message or "")
+
+
+@pytest.mark.asyncio
+async def test_premium_metadata_collector_is_disabled_by_default() -> None:
+    result = await PremiumBrowserCollector(metadata_records=[_premium_metadata_record()]).collect()
+
+    assert result.status == CollectorStatus.FAILED
+    assert result.items == []
+    assert "disabled" in (result.message or "")
+
+
+@pytest.mark.asyncio
+async def test_premium_metadata_requires_explicit_authorization() -> None:
+    result = await PremiumBrowserCollector(
+        enabled=True,
+        metadata_records=[_premium_metadata_record()],
+    ).collect()
+
+    assert result.status == CollectorStatus.FAILED
+    assert result.items == []
+    assert "authorization" in (result.message or "")
+
+
+@pytest.mark.asyncio
+async def test_premium_metadata_collector_rejects_full_text_fields() -> None:
+    record = _premium_metadata_record() | {"full_text": "Premium article body must not be stored."}
+
+    result = await PremiumBrowserCollector(
+        enabled=True,
+        authorized=True,
+        metadata_records=[record],
+    ).collect()
+
+    assert result.status == CollectorStatus.FAILED
+    assert result.items == []
+    assert "full-text" in (result.message or "")
+
+
+def test_premium_metadata_extractor_filters_to_allowed_metadata() -> None:
+    extractor = PremiumMetadataExtractor()
+    metadata = extractor.extract_metadata(_premium_metadata_record() | {"private_note": "drop me"})
+
+    assert metadata["title"] == "Premium metadata item about market structure"
+    assert "private_note" not in metadata
+
+    with pytest.raises(PremiumExtractionError):
+        extractor.extract_metadata(_premium_metadata_record() | {"content": "not allowed"})
+
+
+@pytest.mark.asyncio
+async def test_phase3_metadata_persists_without_full_text_storage() -> None:
+    engine = create_db_engine("sqlite://")
+    init_db(engine)
+    premium = PremiumBrowserCollector(
+        enabled=True,
+        authorized=True,
+        metadata_records=[_premium_metadata_record()],
+        config=_phase3_config(),
+    )
+
+    with Session(engine) as session:
+        for _, collector, endpoint, fixture_name, _ in _phase3_http_cases():
+            response_text = (FIXTURES / fixture_name).read_text(encoding="utf-8")
+            with respx.mock:
+                respx.get(endpoint).mock(return_value=httpx.Response(200, text=response_text))
+                result = await collector.collect()
+            persist_collector_result(session, result)
+
+        premium_result = await premium.collect()
+        persist_collector_result(session, premium_result)
+        statuses = session.exec(select(SourceStatus)).all()
+        content_items = session.exec(select(ContentItem)).all()
+
+    assert len(statuses) == len(_phase3_http_cases()) + 1
+    assert len(content_items) == len(_phase3_http_cases()) + 1
+    assert all(item.excerpt is None or len(item.excerpt) <= 500 for item in content_items)
+    assert all(not hasattr(item, "content_text") for item in content_items)

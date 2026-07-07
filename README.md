@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 2 public and official metadata collectors are implemented. The app has local configuration loading, SQLModel table definitions, SQLite session helpers, health/status routes, a metadata-only RSS collector, and mocked collectors for NewsAPI, GDELT, Alpha Vantage, Finnhub, FRED, SEC EDGAR, arXiv, and GitHub. Business pipeline logic is intentionally not implemented yet.
+Phase 3 social, community, video, and premium metadata boundaries are implemented. The app has local configuration loading, SQLModel table definitions, SQLite session helpers, health/status routes, metadata-only collectors through Phase 3, and tests that enforce no full-text premium storage. Business pipeline logic is intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -50,7 +50,7 @@ Available fixture-only system routes:
 - `GET /status/sources`
 - `GET /settings/public`
 
-Collectors do not run automatically from the app shell. Phase 1 and Phase 2 adapters are exercised through tests and future job wiring.
+Collectors do not run automatically from the app shell. Phase 1 through Phase 3 adapters are exercised through tests and future job wiring.
 
 ## Repository Layout
 
@@ -65,4 +65,4 @@ Collectors do not run automatically from the app shell. Phase 1 and Phase 2 adap
 
 ## Status
 
-Phase 2 is complete. The next milestone is Phase 3: social, community, video, and premium-source metadata boundaries.
+Phase 3 is complete. The next milestone is Phase 4: normalization, extraction boundaries, and storage hygiene.

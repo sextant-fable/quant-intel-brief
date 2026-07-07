@@ -19,7 +19,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
     def health() -> dict[str, Any]:
         return {
             "status": "ok",
-            "phase": "phase_2",
+            "phase": "phase_3",
             "app": settings.app_name,
             "environment": settings.app_env,
             "time_utc": utc_now().isoformat(),
@@ -34,7 +34,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
 
         return {
             "status": "ok",
-            "phase": "phase_2",
+            "phase": "phase_3",
             "sources": [
                 {
                     "source_name": item.source_name,

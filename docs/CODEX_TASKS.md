@@ -21,6 +21,8 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement one public collector end to end with mocked HTTP tests.
 - [x] Implement official/public API collectors with mocked HTTP tests.
 - [x] Add missing-key, rate-limit, failure, and metadata-only collector tests.
+- [x] Implement social, community, video, QuantConnect, and premium metadata collectors.
+- [x] Add premium disabled-by-default and no-full-text boundary tests.
 - [ ] Implement deduplication baseline.
 - [ ] Implement ranking baseline.
 - [ ] Implement report generation from fixtures only.
@@ -49,3 +51,11 @@ Use this document to break future work into safe implementation tasks.
 - HTTP 429 and HTTP 500 responses are covered by mocked tests.
 - Collectors store compact excerpts/summaries and safe metadata only.
 - No social, video, premium, ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.
+
+## Phase 3 Done Criteria
+
+- Reddit, YouTube, X, Stack Exchange, QuantConnect, and premium metadata collectors emit normalized metadata.
+- Social, video, and developer-platform collectors fail safely when required configuration is absent.
+- Premium metadata collection is disabled by default, requires explicit authorization, and rejects full-text fields.
+- Forbidden or access-denied responses are handled as source failures.
+- No extraction beyond metadata boundaries, deduplication, ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.

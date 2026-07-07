@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "question_id": 9001,
+      "title": "How to validate a factor model with rolling windows?",
+      "link": "https://quant.stackexchange.com/questions/9001/factor-model",
+      "creation_date": 1783437000,
+      "tags": ["factor-model", "backtesting"],
+      "score": 5,
+      "answer_count": 2,
+      "is_answered": true,
+      "owner": {"display_name": "Fixture Analyst"}
+    }
+  ],
+  "has_more": false,
+  "quota_remaining": 9999
+}

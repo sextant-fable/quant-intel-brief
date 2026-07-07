@@ -17,6 +17,13 @@ This project must respect source terms, copyright, privacy, and financial-advice
 - Keep generated summaries concise and source-grounded.
 - Avoid reproducing full copyrighted articles or premium content.
 
+## Premium And Social Boundaries
+
+- Premium sources may provide user-authorized metadata only unless a later phase explicitly documents a permitted source-specific exception.
+- Do not export, store, or replay browser cookies, local profiles, session files, or paywalled page bodies.
+- Do not collect or store YouTube transcripts, X post expansions, Reddit selftext bodies, Stack Exchange answers, QuantConnect code files, or premium article bodies in Phase 3.
+- Access-denied, forbidden, or missing-credential responses must be recorded as source failures, not worked around.
+
 ## Financial Boundary
 
 The system is for information organization and research assistance. It must not provide personalized investment advice, trading instructions, or guarantees.

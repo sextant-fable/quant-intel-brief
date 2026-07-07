@@ -1,0 +1,23 @@
+{
+  "kind": "Listing",
+  "data": {
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "id": "abc123",
+          "title": "How are people monitoring intraday factor drift?",
+          "permalink": "/r/algotrading/comments/abc123/factor_drift/",
+          "author": "fixture_user",
+          "subreddit": "algotrading",
+          "created_utc": 1783437000,
+          "score": 42,
+          "num_comments": 9,
+          "upvote_ratio": 0.91,
+          "is_self": true,
+          "link_flair_text": "Discussion"
+        }
+      }
+    ]
+  }
+}

@@ -43,10 +43,14 @@ class Settings(BaseSettings):
     github_token: SecretStr | None = None
     reddit_client_id: SecretStr | None = None
     reddit_client_secret: SecretStr | None = None
+    reddit_access_token: SecretStr | None = None
+    reddit_user_agent: str | None = None
     youtube_api_key: SecretStr | None = None
     x_bearer_token: SecretStr | None = None
     stackexchange_key: SecretStr | None = None
+    quantconnect_user_id: SecretStr | None = None
     quantconnect_token: SecretStr | None = None
+    quantconnect_organization_id: str | None = None
 
     email_provider: str = "smtp"
     smtp_host: str | None = None
