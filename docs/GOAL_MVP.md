@@ -6,13 +6,15 @@ This document governs Goal Mode work for implementing the MVP of Quant Intel Bri
 
 Codex must execute phases sequentially from Phase 0 through Phase 10, one phase at a time.
 
-After every phase, Codex must stop for a mandatory review checkpoint and wait for the user's explicit reply:
+Within an explicitly approved Goal Mode run, the user pre-authorizes Codex to split the active phase into smaller internal stages. After each internal stage passes validation and secret-safety checks, Codex must automatically create a stage commit and push it to the current tracked branch.
+
+At every Phase 0 through Phase 10 boundary, Codex must stop for a mandatory review checkpoint after successful validation and any required checkpoint commit/push. Codex must wait for the user's explicit reply before starting the next phase:
 
 ```text
 continue
 ```
 
-Codex must not proceed to the next phase without that exact user approval.
+Codex must not proceed to the next phase without that exact user approval. Internal stage commits within the current approved phase do not require additional user approval as long as validation passes and no forbidden files are included.
 
 ## Mandatory Phase Gate
 
@@ -35,21 +37,21 @@ ruff check .
 mypy app tests
 ```
 
-Codex must not declare a phase complete if tests fail. If any validation command cannot run, Codex must stop, explain why, and wait for user direction.
+Codex must not declare a phase complete if tests fail. If any validation command fails or cannot run, Codex must diagnose the issue, attempt reasonable fixes within the active phase scope, and rerun validation. Codex must stop only when the failure is blocked by external state, credentials, legal/source-access uncertainty, missing user decisions, unavailable required tooling that cannot be safely installed or worked around, or repeated failures that cannot be resolved without changing the approved scope.
 
 ## Git Checkpoint Policy
 
-Codex must inspect `git status` before starting each phase and before completing each phase.
+Codex must inspect `git status` before starting each phase, before each internal stage commit, and before completing each phase.
 
-Codex must not commit or push if validation commands fail.
+Codex must not commit or push if validation commands fail. If validation fails, Codex must attempt to fix the issue first, then rerun validation. Failed or partially fixed states must remain uncommitted unless the user explicitly requests a diagnostic checkpoint.
 
 Codex must not commit or push secrets, `.env`, runtime DB files, generated reports, cookies, tokens, local browser profiles, or private artifacts.
 
-At the phase checkpoint, Codex must show changed files and summarize diffs.
+At each internal stage checkpoint, Codex must inspect changed files and summarize the diff before committing when practical. At each phase checkpoint, Codex must show changed files and summarize diffs before stopping for user review.
 
-After tests pass, Codex must stop and wait for the user's review.
+After internal stage tests pass, Codex is pre-authorized to commit and push. After phase-boundary tests pass, Codex must complete any required checkpoint commit/push, then stop and wait for the user's review before moving to the next phase.
 
-Only after the user explicitly approves the checkpoint should Codex create a phase commit.
+The user's Goal Mode approval authorizes internal stage commits and phase checkpoint commits within the active phase. User approval is still required before starting the next phase.
 
 Only after a successful commit should Codex push to the current tracked branch.
 
@@ -60,6 +62,8 @@ Commit messages should follow:
 ```text
 Phase N: <short phase name>
 ```
+
+For internal stage commits, use the active phase number and a short stage name, for example `Phase 2: Add FRED fixture parser`.
 
 Codex must not squash or rewrite history unless the user explicitly requests it.
 
@@ -100,5 +104,6 @@ At the end of each phase, Codex must report:
 - Tests and validation commands run.
 - Any skipped checks and why.
 - Confirmation that no forbidden actions occurred.
+- Commit SHA and push status for automatic stage or phase checkpoint commits.
 - Remaining risks or follow-up notes.
 - A clear request for the user's `continue` reply before the next phase.
