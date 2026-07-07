@@ -7,10 +7,9 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 from dateutil import parser as date_parser  # type: ignore[import-untyped]
@@ -18,6 +17,7 @@ from sqlmodel import Session, select
 
 from app.core.timezones import UTC, ensure_utc, utc_now
 from app.db.models import ContentItem, RawItem, Source, SourceStatus
+from app.dedup.canonicalize import build_source_reference, canonicalize_url
 
 
 class CollectorStatus(StrEnum):
@@ -223,17 +223,8 @@ class SourceCollector:
 
 
 def canonicalize_url_for_storage(url: str) -> str:
-    """Apply light URL cleanup before full canonicalization exists."""
-    parts = urlsplit(url.strip())
-    return urlunsplit(
-        (
-            parts.scheme.lower(),
-            parts.netloc.lower(),
-            parts.path.rstrip("/") or parts.path,
-            "",
-            parts.query,
-        )
-    )
+    """Canonicalize a URL for normalized storage."""
+    return canonicalize_url(url)
 
 
 def compact_text_for_storage(value: Any | None, max_chars: int = 500) -> str | None:
@@ -245,7 +236,8 @@ def compact_text_for_storage(value: Any | None, max_chars: int = 500) -> str | N
         return None
     if len(cleaned) <= max_chars:
         return cleaned
-    return f"{cleaned[: max_chars - 1].rstrip()}..."
+    suffix = "..."
+    return f"{cleaned[: max_chars - len(suffix)].rstrip()}{suffix}"
 
 
 def hash_text(value: str) -> str:
@@ -349,6 +341,10 @@ def _upsert_raw_item(
     raw_item.published_at = item.published_at
     raw_item.fetched_at = item.fetched_at
     raw_item.raw_payload_hash = item.raw_payload_hash
+    raw_item.storage_policy = "metadata_only"
+    raw_item.retain_for_days = 30
+    raw_item.retention_until = _retention_until(item.fetched_at)
+    raw_item.source_reference = _source_reference_metadata(item, canonical_url)
     raw_item.raw_metadata = item.raw_metadata
     session.flush()
     return raw_item, created
@@ -401,6 +397,10 @@ def _upsert_content_item(
     content_item.fetched_at = item.fetched_at
     content_item.language = item.language
     content_item.raw_payload_hash = item.raw_payload_hash
+    content_item.storage_policy = "metadata_only"
+    content_item.retain_for_days = 30
+    content_item.retention_until = _retention_until(item.fetched_at)
+    content_item.source_reference = _source_reference_metadata(item, canonical_url)
     session.flush()
     return created
 
@@ -427,6 +427,21 @@ def _upsert_source_status(
     status_row.last_checked_at = result.fetched_at
     session.flush()
     return status_row
+
+
+def _retention_until(fetched_at: datetime) -> datetime:
+    return ensure_utc(fetched_at) + timedelta(days=30)
+
+
+def _source_reference_metadata(item: CollectedItem, canonical_url: str) -> dict[str, str]:
+    reference = build_source_reference(
+        item.url,
+        item.source_item_id,
+        item.title,
+        item.excerpt,
+        canonical_url=canonical_url,
+    )
+    return reference.to_metadata()
 
 
 __all__ = [

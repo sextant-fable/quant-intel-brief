@@ -23,6 +23,9 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add missing-key, rate-limit, failure, and metadata-only collector tests.
 - [x] Implement social, community, video, QuantConnect, and premium metadata collectors.
 - [x] Add premium disabled-by-default and no-full-text boundary tests.
+- [x] Add deterministic URL canonicalization tests.
+- [x] Add compact excerpt and no-full-text extraction boundary tests.
+- [x] Add source reference, payload hash, and retention metadata persistence tests.
 - [ ] Implement deduplication baseline.
 - [ ] Implement ranking baseline.
 - [ ] Implement report generation from fixtures only.
@@ -59,3 +62,11 @@ Use this document to break future work into safe implementation tasks.
 - Premium metadata collection is disabled by default, requires explicit authorization, and rejects full-text fields.
 - Forbidden or access-denied responses are handled as source failures.
 - No extraction beyond metadata boundaries, deduplication, ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.
+
+## Phase 4 Done Criteria
+
+- Canonical URL normalization is deterministic and strips common tracking parameters.
+- Article extraction defaults to no text extraction and refuses full-text storage.
+- Compact excerpts are sanitized and bounded when explicitly permitted.
+- Raw and content items persist metadata-only storage policy, source references, payload hashes, and 30-day retention timestamps.
+- No dedup clustering, enrichment, ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.

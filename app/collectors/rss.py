@@ -220,7 +220,8 @@ def _compact_html(value: str | None, max_chars: int = MAX_EXCERPT_CHARS) -> str 
         return None
     if len(cleaned) <= max_chars:
         return cleaned
-    return f"{cleaned[: max_chars - 1].rstrip()}..."
+    suffix = "..."
+    return f"{cleaned[: max_chars - len(suffix)].rstrip()}{suffix}"
 
 
 def _parse_datetime(value: str | None) -> datetime | None:

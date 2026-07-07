@@ -61,6 +61,10 @@ class RawItem(SQLModel, table=True):
     published_at: datetime | None = None
     fetched_at: datetime = Field(default_factory=utc_now, nullable=False)
     raw_payload_hash: str | None = Field(default=None, index=True)
+    storage_policy: str = Field(default="metadata_only", index=True)
+    retain_for_days: int = 30
+    retention_until: datetime | None = Field(default=None, index=True)
+    source_reference: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     raw_metadata: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
 
 
@@ -92,6 +96,10 @@ class ContentItem(SQLModel, table=True):
     quant_topics: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     raw_payload_hash: str | None = Field(default=None, index=True)
     source_terms_checked_at: datetime | None = None
+    storage_policy: str = Field(default="metadata_only", index=True)
+    retain_for_days: int = 30
+    retention_until: datetime | None = Field(default=None, index=True)
+    source_reference: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=utc_now, nullable=False)
 
 

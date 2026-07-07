@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 3 social, community, video, and premium metadata boundaries are implemented. The app has local configuration loading, SQLModel table definitions, SQLite session helpers, health/status routes, metadata-only collectors through Phase 3, and tests that enforce no full-text premium storage. Business pipeline logic is intentionally not implemented yet.
+Phase 4 normalization, extraction boundaries, and storage hygiene are implemented. The app has metadata-only collectors through Phase 3 plus deterministic URL canonicalization, safe compact-excerpt extraction boundaries, source references, payload hashes, and 30-day retention metadata. Business pipeline logic is intentionally not implemented yet.
 
 ## Intended Workflow
 
@@ -65,4 +65,4 @@ Collectors do not run automatically from the app shell. Phase 1 through Phase 3 
 
 ## Status
 
-Phase 3 is complete. The next milestone is Phase 4: normalization, extraction boundaries, and storage hygiene.
+Phase 4 is complete. The next milestone is Phase 5: event deduplication and tagging.

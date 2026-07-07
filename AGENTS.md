@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-Phase 3 social, community, video, and premium metadata boundaries are implemented. Do not implement extraction beyond approved metadata boundaries, enrichment, deduplication, ranking, LLM summarization, report generation, email delivery, scheduling, or dashboard business views until the relevant phase in `PLANS.md`.
+Phase 4 normalization, extraction boundaries, and storage hygiene are implemented. Do not implement event clustering, enrichment, ranking, LLM summarization, report generation, email delivery, scheduling, or dashboard business views until the relevant phase in `PLANS.md`.
 
 ## Repository Layout
 

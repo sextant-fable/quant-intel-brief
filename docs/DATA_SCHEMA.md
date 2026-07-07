@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata.
 
 ## Planned Core Entities
 
@@ -34,6 +34,10 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `quant_topics`
 - `raw_payload_hash`
 - `source_terms_checked_at`
+- `storage_policy`
+- `retain_for_days`
+- `retention_until`
+- `source_reference`
 
 ## Schema Rules
 
@@ -80,3 +84,11 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - Premium metadata is filtered by `PremiumMetadataExtractor` before storage.
 - Forbidden premium text fields include body, content, full text, article text, transcripts, HTML, and Markdown.
 - Platform credentials, authorization headers, cookies, and local browser profile data are never persisted.
+
+## Phase 4 Storage Hygiene Rules
+
+- Canonical URLs are normalized by `app/dedup/canonicalize.py`.
+- Raw and content items store `storage_policy="metadata_only"` by default.
+- Raw and content items include source-reference metadata with URL, canonical URL, and payload hash.
+- Raw and content items include `retain_for_days=30` and `retention_until` for local history cleanup.
+- Article extraction defaults to no text extraction and refuses full-text storage requests.

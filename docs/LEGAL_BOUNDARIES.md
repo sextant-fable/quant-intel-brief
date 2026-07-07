@@ -16,6 +16,7 @@ This project must respect source terms, copyright, privacy, and financial-advice
 - Store extracted text only when source terms and user authorization clearly permit it.
 - Keep generated summaries concise and source-grounded.
 - Avoid reproducing full copyrighted articles or premium content.
+- Compact excerpts must be bounded, sanitized, and used only when extraction is permitted.
 
 ## Premium And Social Boundaries
 
@@ -23,6 +24,12 @@ This project must respect source terms, copyright, privacy, and financial-advice
 - Do not export, store, or replay browser cookies, local profiles, session files, or paywalled page bodies.
 - Do not collect or store YouTube transcripts, X post expansions, Reddit selftext bodies, Stack Exchange answers, QuantConnect code files, or premium article bodies in Phase 3.
 - Access-denied, forbidden, or missing-credential responses must be recorded as source failures, not worked around.
+
+## Phase 4 Extraction Boundary
+
+- `extract_article_metadata` defaults to metadata-only behavior and no-ops text extraction unless compact excerpts are explicitly permitted.
+- Full-text storage requests must fail fast.
+- Source references and hashes may be stored to support traceability without archiving the source payload.
 
 ## Financial Boundary
 

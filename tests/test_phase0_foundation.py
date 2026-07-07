@@ -74,7 +74,7 @@ def test_create_app_registers_fixture_only_health_routes() -> None:
     public_settings = client.get("/settings/public")
 
     assert health.status_code == 200
-    assert health.json()["phase"] == "phase_3"
+    assert health.json()["phase"] == "phase_4"
     assert health.json()["app"] == "phase-zero-test"
     assert source_status.status_code == 200
     assert source_status.json()["sources"] == []

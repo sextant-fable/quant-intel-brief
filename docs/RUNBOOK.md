@@ -51,6 +51,16 @@ Phase 2 and Phase 3 adapters may require local `.env` credentials for real perso
 
 Premium metadata intake is disabled by default. For tests and future local runs, it accepts explicit metadata records only and rejects body/content/transcript/HTML/Markdown fields.
 
+## Phase 4 Normalization Checks
+
+Canonicalization, compact-excerpt extraction boundaries, source references, and 30-day retention metadata are covered by:
+
+```bash
+pytest tests/test_extraction_boundaries.py
+```
+
+Article extraction defaults to metadata-only behavior. Full-text storage attempts should raise an error instead of silently persisting content.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.
