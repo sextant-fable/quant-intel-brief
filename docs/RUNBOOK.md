@@ -71,6 +71,16 @@ pytest tests/test_dedup.py tests/test_enrichers.py
 
 The Phase 5 baseline is deterministic and conservative. It does not rank events, call an LLM, generate reports, or drive dashboard business views.
 
+## Phase 6 Ranking Checks
+
+Deterministic ranking and heat scoring are covered by:
+
+```bash
+pytest tests/test_ranking.py
+```
+
+Ranking explanations are informational importance notes only. They must not contain trade instructions, price targets, or personalized recommendations.
+
 ## Incident Notes
 
 - Source failures should degrade report coverage, not crash the entire daily run.

@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-Phase 5 deterministic event deduplication and rule-based tagging are implemented. Do not implement ranking, LLM summarization, report generation, email delivery, scheduling, or dashboard business views until the relevant phase in `PLANS.md`.
+Phase 6 deterministic ranking and heat scoring are implemented. Do not implement LLM summarization, report generation, email delivery, scheduling, or dashboard business views until the relevant phase in `PLANS.md`.
 
 ## Repository Layout
 

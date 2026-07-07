@@ -1,6 +1,6 @@
 # Data Schema
 
-Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata. Phase 5 adds deterministic event clusters, event-item relationships, and rule-based tags.
+Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1 adds collector persistence helpers that populate source, raw item, content item, and source status rows from metadata-only collector results. Phase 2 adds official/public API collectors that emit the same normalized metadata shape. Phase 3 extends that shape to configured social, community, video, developer-platform, and premium metadata sources. Phase 4 adds deterministic canonicalization, source references, and retention metadata. Phase 5 adds deterministic event clusters, event-item relationships, and rule-based tags. Phase 6 adds ranked items with visible score components and explanations.
 
 ## Planned Core Entities
 
@@ -102,3 +102,10 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `EntityTag` records source, ticker, asset, and quant-theme tags with confidence and rule provenance.
 - Ticker extraction is conservative and ignores ambiguous uppercase terms unless they are known tickers or explicit cashtags.
 - Tagging is rule-based only; no LLM tagging is used in Phase 5.
+
+## Phase 6 Ranking Rules
+
+- `RankedItem` stores score, component dictionary, explanation, and ranking timestamp.
+- Score components include source credibility, recency, coverage, asset importance, research signal, and capped community heat.
+- Ranking explanations must remain informational and non-advisory.
+- Ranking is deterministic for a fixed fixture set and does not call an LLM.

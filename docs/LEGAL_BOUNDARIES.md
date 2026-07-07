@@ -34,3 +34,5 @@ This project must respect source terms, copyright, privacy, and financial-advice
 ## Financial Boundary
 
 The system is for information organization and research assistance. It must not provide personalized investment advice, trading instructions, or guarantees.
+
+Ranking and heat scores are informational prioritization signals. They must not be phrased as buy/sell/hold instructions, price targets, or portfolio recommendations.

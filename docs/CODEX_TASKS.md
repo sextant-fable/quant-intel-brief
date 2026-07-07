@@ -28,7 +28,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add source reference, payload hash, and retention metadata persistence tests.
 - [x] Implement deduplication baseline.
 - [x] Implement conservative ticker, asset, source, and quant-theme tagging baseline.
-- [ ] Implement ranking baseline.
+- [x] Implement ranking baseline.
 - [ ] Implement report generation from fixtures only.
 - [ ] Implement dashboard route from fixtures.
 - [ ] Implement email preview before sending.
@@ -80,3 +80,12 @@ Use this document to break future work into safe implementation tasks.
 - Source, ticker, asset, and quant-theme tags include confidence and provenance.
 - Ticker ambiguity is handled conservatively.
 - No ranking, LLM, report, email, dashboard business, or scheduler behavior is implemented.
+
+## Phase 6 Done Criteria
+
+- Ranking order is deterministic for representative fixtures.
+- Score components are visible in `RankedItem.score_components`.
+- Recency, source credibility, coverage, asset importance, research signal, and community heat are tested.
+- Community heat is capped and cannot dominate from one untrusted source alone.
+- Explanations are complete and informational, not advisory.
+- No LLM, report, email, dashboard business, or scheduler behavior is implemented.
