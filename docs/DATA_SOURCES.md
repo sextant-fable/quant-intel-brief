@@ -42,7 +42,8 @@ This document tracks planned source adapters and their legal/technical requireme
 - API-key or user-agent requirements are enforced before HTTP requests for key-gated sources.
 - All tests use fixture responses and `respx`; no live API calls are made in tests.
 - Stored records are source IDs, canonical links, publication/fetch timestamps, compact excerpts or summaries, and safe metadata only.
-- These collectors are not scheduled and are not wired to dashboard actions yet.
+- RSS, SEC EDGAR, arXiv, GitHub, and FRED can be run through `python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred`.
+- Manual collection is not scheduled and is not wired to dashboard actions.
 
 ## Phase 3 Social, Community, Video, And Premium Behavior
 

@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 10 local job orchestration, retention cleanup, and optional scheduler boundaries are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, local dashboard pages, and tested local operations jobs.
+Phase 10 local job orchestration, retention cleanup, and optional scheduler boundaries are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, local dashboard pages, tested local operations jobs, and a manual collect-once command for selected public/official sources.
 
 ## Intended Workflow
 
@@ -73,6 +73,25 @@ python -m app.jobs.seed_demo
 
 This writes simulated Fed, ETF/options, SEC, arXiv, GitHub, and Reddit metadata into local SQLite storage so the dashboard looks populated without external API calls.
 
+Run selected live collectors manually with:
+
+```bash
+python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
+```
+
+This command is user-triggered only. It writes metadata and source status rows into local SQLite, but it does not run the scheduler, call an LLM, generate summaries, or send email. Configure source targets and credentials in `.env` first:
+
+```bash
+RSS_FEED_URLS=
+SEC_USER_AGENT=your-app-name your-email@example.com
+SEC_CIK=0000320193
+ARXIV_SEARCH_QUERY=cat:q-fin*
+GITHUB_QUERY=quant finance language:Python
+GITHUB_TOKEN=
+FRED_API_KEY=
+FRED_SERIES_ID=FEDFUNDS
+```
+
 For LLM providers, use OpenAI-compatible settings in `.env`:
 
 ```bash
@@ -105,4 +124,4 @@ The settings page saves the API key into the local `.env` file and does not disp
 
 ## Status
 
-Phase 10 is complete. The next milestone is selected from `PLANS.md` Future Backlog after review.
+Phase 10 is complete. The current backlog milestone is manual source collection for RSS, SEC EDGAR, arXiv, GitHub, and FRED.

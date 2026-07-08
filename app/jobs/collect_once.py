@@ -1,0 +1,308 @@
+"""Manual one-shot source collection command."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import re
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
+from typing import Protocol
+
+from pydantic import SecretStr
+from sqlmodel import Session
+
+from app.collectors.arxiv import ArxivCollector
+from app.collectors.base import (
+    CollectorConfig,
+    CollectorPersistenceSummary,
+    CollectorRunResult,
+    CollectorStatus,
+    SourceCollector,
+    persist_collector_result,
+)
+from app.collectors.fred import FredCollector
+from app.collectors.github import GitHubCollector
+from app.collectors.rss import RssCollector
+from app.collectors.sec_edgar import SecEdgarCollector
+from app.core.config import Settings, get_settings
+from app.core.timezones import utc_now
+from app.db.session import create_db_engine, init_db
+
+SUPPORTED_SOURCES = ("rss", "sec_edgar", "arxiv", "github", "fred")
+DEFAULT_SOURCES = SUPPORTED_SOURCES
+
+
+class CollectorLike(Protocol):
+    """Collector shape required by the manual collection runner."""
+
+    source_name: str
+    source_type: str
+    display_name: str
+
+    async def collect(self) -> CollectorRunResult:
+        """Collect one source run."""
+
+
+@dataclass(frozen=True, slots=True)
+class CollectOnceResult:
+    """Summary of one manual collect-once run."""
+
+    requested_sources: tuple[str, ...]
+    summaries: tuple[CollectorPersistenceSummary, ...]
+
+    @property
+    def collector_count(self) -> int:
+        return len(self.summaries)
+
+    @property
+    def total_items_seen(self) -> int:
+        return sum(summary.content_items_seen for summary in self.summaries)
+
+    @property
+    def source_failure_count(self) -> int:
+        ok_statuses = {CollectorStatus.SUCCESS, CollectorStatus.EMPTY}
+        return sum(1 for summary in self.summaries if summary.status not in ok_statuses)
+
+
+async def collect_once(
+    session: Session,
+    *,
+    settings: Settings | None = None,
+    sources: str | Iterable[str] | None = None,
+    collectors: Sequence[CollectorLike] | None = None,
+) -> CollectOnceResult:
+    """Collect configured sources once and persist source statuses/items locally."""
+    selected_sources = parse_sources(sources)
+    active_collectors = list(collectors) if collectors is not None else build_collectors(
+        settings or get_settings(),
+        selected_sources,
+    )
+    requested_sources = (
+        tuple(collector.source_name for collector in active_collectors)
+        if collectors is not None
+        else selected_sources
+    )
+    summaries: list[CollectorPersistenceSummary] = []
+
+    for collector in active_collectors:
+        try:
+            result = await collector.collect()
+        except Exception as exc:
+            result = _exception_result(collector, exc)
+        summaries.append(persist_collector_result(session, result))
+
+    return CollectOnceResult(
+        requested_sources=requested_sources,
+        summaries=tuple(summaries),
+    )
+
+
+def build_collectors(
+    settings: Settings,
+    sources: Iterable[str] | None = None,
+) -> list[CollectorLike]:
+    """Build collector instances for the requested source names."""
+    selected_sources = parse_sources(sources)
+    config = _collector_config(settings)
+    collectors: list[CollectorLike] = []
+    for source_name in selected_sources:
+        if source_name == "rss":
+            collectors.extend(_rss_collectors(settings, config))
+        elif source_name == "sec_edgar":
+            collectors.append(
+                SecEdgarCollector(
+                    user_agent=settings.sec_user_agent,
+                    cik=settings.sec_cik,
+                    config=config,
+                )
+            )
+        elif source_name == "arxiv":
+            collectors.append(
+                ArxivCollector(
+                    search_query=settings.arxiv_search_query,
+                    config=config,
+                )
+            )
+        elif source_name == "github":
+            collectors.append(
+                GitHubCollector(
+                    token=_secret_value(settings.github_token),
+                    query=settings.github_query,
+                    config=config,
+                )
+            )
+        elif source_name == "fred":
+            collectors.append(
+                FredCollector(
+                    api_key=_secret_value(settings.fred_api_key),
+                    series_id=settings.fred_series_id,
+                    config=config,
+                )
+            )
+        else:
+            raise ValueError(f"Unsupported source: {source_name}")
+    return collectors
+
+
+def parse_sources(sources: str | Iterable[str] | None) -> tuple[str, ...]:
+    """Normalize source names from CLI/env-style input."""
+    if sources is None:
+        return DEFAULT_SOURCES
+    if isinstance(sources, str):
+        source_names = _split_list_setting(sources)
+    else:
+        source_names = tuple(name.strip() for name in sources if name.strip())
+
+    if not source_names:
+        return DEFAULT_SOURCES
+
+    unsupported = tuple(name for name in source_names if name not in SUPPORTED_SOURCES)
+    if unsupported:
+        supported = ", ".join(SUPPORTED_SOURCES)
+        invalid = ", ".join(unsupported)
+        raise ValueError(f"Unsupported source(s): {invalid}. Supported: {supported}.")
+
+    return source_names
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run manual one-shot collection from the command line."""
+    parser = argparse.ArgumentParser(description="Collect configured sources once.")
+    parser.add_argument(
+        "--sources",
+        default=",".join(DEFAULT_SOURCES),
+        help="Comma-separated source names. Supported: "
+        f"{', '.join(SUPPORTED_SOURCES)}.",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        sources = parse_sources(args.sources)
+    except ValueError as exc:
+        parser.error(str(exc))
+
+    settings = get_settings()
+    engine = create_db_engine(settings.database_url)
+    init_db(engine)
+    with Session(engine) as session:
+        result = asyncio.run(collect_once(session, settings=settings, sources=sources))
+
+    print(  # noqa: T201
+        "Manual collect once complete: "
+        f"{result.collector_count} collector run(s), "
+        f"{result.total_items_seen} new content item(s), "
+        f"{result.source_failure_count} source failure(s)."
+    )
+    for summary in result.summaries:
+        print(  # noqa: T201
+            f"- {summary.source_name}: {summary.status.value}; "
+            f"new items={summary.content_items_seen}; "
+            f"skipped duplicates={summary.skipped_duplicates}"
+        )
+    return 0
+
+
+def _collector_config(settings: Settings) -> CollectorConfig:
+    return CollectorConfig(
+        timeout_seconds=settings.collector_timeout_seconds,
+        retry_attempts=settings.http_retry_attempts,
+        retry_backoff_seconds=settings.http_retry_backoff_seconds,
+        max_items=settings.max_items_per_source,
+    )
+
+
+def _rss_collectors(settings: Settings, config: CollectorConfig) -> list[CollectorLike]:
+    feed_urls = _split_list_setting(settings.rss_feed_urls)
+    if not feed_urls:
+        return [
+            StaticResultCollector(
+                source_name="rss",
+                source_type="rss",
+                display_name="RSS Feed",
+                status=CollectorStatus.FAILED,
+                message="RSS_FEED_URLS is required for RSS collection.",
+            )
+        ]
+
+    use_numbered_names = len(feed_urls) > 1
+    collectors: list[CollectorLike] = []
+    for index, feed_url in enumerate(feed_urls, start=1):
+        collectors.append(
+            RssCollector(
+                feed_url=feed_url,
+                source_name=f"rss_{index}" if use_numbered_names else "rss",
+                display_name=f"RSS Feed {index}" if use_numbered_names else "RSS Feed",
+                config=config,
+            )
+        )
+    return collectors
+
+
+def _split_list_setting(value: str | None) -> tuple[str, ...]:
+    if not value:
+        return ()
+    return tuple(part.strip() for part in re.split(r"[\n,]+", value) if part.strip())
+
+
+def _secret_value(value: SecretStr | None) -> str | None:
+    return value.get_secret_value() if value else None
+
+
+def _exception_result(collector: CollectorLike, exc: Exception) -> CollectorRunResult:
+    return CollectorRunResult(
+        source_name=collector.source_name,
+        source_type=collector.source_type,
+        display_name=collector.display_name,
+        status=CollectorStatus.FAILED,
+        message=f"Collector raised {type(exc).__name__}: {exc}",
+        fetched_at=utc_now(),
+    )
+
+
+class StaticResultCollector(SourceCollector):
+    """Collector that returns a preconfigured status without network access."""
+
+    def __init__(
+        self,
+        *,
+        source_name: str,
+        source_type: str,
+        display_name: str,
+        status: CollectorStatus,
+        message: str,
+    ) -> None:
+        super().__init__(
+            source_name=source_name,
+            source_type=source_type,
+            display_name=display_name,
+        )
+        self._status = status
+        self._message = message
+
+    async def collect(self) -> CollectorRunResult:
+        return CollectorRunResult(
+            source_name=self.source_name,
+            source_type=self.source_type,
+            display_name=self.display_name,
+            status=self._status,
+            message=self._message,
+            fetched_at=utc_now(),
+        )
+
+
+__all__ = [
+    "CollectOnceResult",
+    "CollectorLike",
+    "DEFAULT_SOURCES",
+    "SUPPORTED_SOURCES",
+    "StaticResultCollector",
+    "build_collectors",
+    "collect_once",
+    "main",
+    "parse_sources",
+]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

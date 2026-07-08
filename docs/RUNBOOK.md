@@ -47,7 +47,7 @@ pytest tests/test_collectors.py
 
 Collectors are not wired to a scheduler or dashboard action yet. Do not use live feeds in tests; add local fixtures or `respx` mocks instead.
 
-Phase 2 and Phase 3 adapters may require local `.env` credentials for real personal runs later, but no live-run command is provided yet. Missing keys, user-agent settings, access tokens, or user IDs should return collector failure states before HTTP is attempted.
+Phase 2 and Phase 3 adapters may require local `.env` credentials for real personal runs. Missing keys, user-agent settings, access tokens, or user IDs should return collector failure states before HTTP is attempted.
 
 Premium metadata intake is disabled by default. For tests and future local runs, it accepts explicit metadata records only and rejects body/content/transcript/HTML/Markdown fields.
 
@@ -98,6 +98,35 @@ http://127.0.0.1:8001/settings/llm
 ```
 
 Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-compatible provider. The page writes to the local `.env` file, leaves saved API keys hidden, and does not test-call the provider.
+
+## Manual Collect Once
+
+Run selected public/official collectors manually:
+
+```bash
+python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
+```
+
+The command writes metadata-only records and source statuses into local SQLite. It does not run the scheduler, call an LLM, generate summaries, or send email.
+
+Useful local `.env` settings:
+
+```bash
+RSS_FEED_URLS=
+SEC_USER_AGENT=your-app-name your-email@example.com
+SEC_CIK=0000320193
+ARXIV_SEARCH_QUERY=cat:q-fin*
+GITHUB_QUERY=quant finance language:Python
+GITHUB_TOKEN=
+FRED_API_KEY=
+FRED_SERIES_ID=FEDFUNDS
+```
+
+Collector command tests use injected fake collectors and mocked adapter tests only:
+
+```bash
+pytest tests/test_collect_once.py tests/test_collectors.py
+```
 
 ## Phase 8 Report And Email Checks
 

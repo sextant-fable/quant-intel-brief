@@ -41,10 +41,15 @@ class Settings(BaseSettings):
     gdelt_api_key: SecretStr | None = None
     alphavantage_api_key: SecretStr | None = None
     finnhub_api_key: SecretStr | None = None
+    rss_feed_urls: str | None = None
     fred_api_key: SecretStr | None = None
+    fred_series_id: str = "FEDFUNDS"
     sec_user_agent: str | None = None
+    sec_cik: str = "0000320193"
+    arxiv_search_query: str = "cat:q-fin*"
 
     github_token: SecretStr | None = None
+    github_query: str = "quant finance language:Python"
     reddit_client_id: SecretStr | None = None
     reddit_client_secret: SecretStr | None = None
     reddit_access_token: SecretStr | None = None

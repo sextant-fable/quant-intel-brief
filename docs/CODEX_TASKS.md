@@ -39,6 +39,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement local demo seed data command.
 - [x] Generalize LLM configuration for OpenAI-compatible providers.
 - [x] Add local dashboard page for saving LLM API settings.
+- [x] Add manual collect-once command for RSS, SEC EDGAR, arXiv, GitHub, and FRED.
 
 ## Phase 0 Done Criteria
 
