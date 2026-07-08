@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Premium Sources - {{ settings.dashboard_title }}{% endblock %}
+{% block body %}
+<main class="shell" data-page="premium-sources">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Reading queue</p>
+      <h1>Premium Sources</h1>
+    </div>
+    <p class="timestamp">{{ view.note_count }} queued</p>
+  </section>
+
+  <p class="notice">This page stores public metadata and your own notes only. It does not use login cookies, bypass paywalls, or store premium article full text.</p>
+
+  {% if view.message %}
+    <p class="notice">{{ view.message }}</p>
+  {% endif %}
+
+  {% if view.error %}
+    <p class="notice notice-error">{{ view.error }}</p>
+  {% endif %}
+
+  {% if view.rss_result %}
+    <section class="run-summary" aria-label="Premium RSS result">
+      <div>
+        <span class="metric-value">{{ view.rss_result.collector_count }}</span>
+        <span class="metric-label">RSS runs</span>
+      </div>
+      <div>
+        <span class="metric-value">{{ view.rss_result.queued_items }}</span>
+        <span class="metric-label">Queued links</span>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="grid-two premium-grid">
+    <form class="settings-form" action="/premium" method="post">
+      <h2>Public RSS Metadata</h2>
+      <label>
+        Public RSS Feed URLs
+        <textarea name="premium_rss_feed_urls" rows="5" placeholder="Paste public WSJ/Bloomberg RSS feed URLs, one per line">{{ view.premium_rss_feed_urls }}</textarea>
+      </label>
+      <div class="settings-actions">
+        <button type="submit" name="action" value="save_rss">Save RSS Feeds</button>
+        <button type="submit" name="action" value="collect_rss">Collect Public RSS</button>
+      </div>
+    </form>
+
+    <form class="settings-form" action="/premium" method="post">
+      <h2>Add Reading Link</h2>
+      <label>
+        URL
+        <input name="url" required placeholder="https://www.wsj.com/...">
+      </label>
+      <label>
+        Title
+        <input name="title" required>
+      </label>
+      <div class="source-grid">
+        <label>
+          Publisher
+          <input name="publisher" placeholder="WSJ or Bloomberg">
+        </label>
+        <label>
+          Tickers
+          <input name="tickers" placeholder="SPY, NVDA">
+        </label>
+        <label>
+          Importance
+          <input name="importance" type="number" min="1" max="5" value="3">
+        </label>
+        <label>
+          Status
+          <select name="status">
+            <option value="to_read">To read</option>
+            <option value="read">Read</option>
+            <option value="skipped">Skipped</option>
+          </select>
+        </label>
+      </div>
+      <label>
+        Public Summary
+        <textarea name="public_summary" rows="3" placeholder="Short public RSS summary or your own brief description"></textarea>
+      </label>
+      <label>
+        My Notes
+        <textarea name="user_note" rows="4" placeholder="Write your own takeaways, not copied article full text"></textarea>
+      </label>
+      <button type="submit" name="action" value="add_manual">Add To Queue</button>
+    </form>
+  </section>
+
+  <section class="section-heading">
+    <h2>Reading Queue</h2>
+  </section>
+
+  {% if not view.notes %}
+    <p class="empty-state">No premium reading items yet.</p>
+  {% endif %}
+
+  <ul class="item-list premium-list">
+    {% for note in view.notes %}
+      <li>
+        <a class="item-title" href="{{ note.url }}" target="_blank" rel="noreferrer">{{ note.title }}</a>
+        <p class="item-meta">{{ note.publisher or "Premium source" }} | importance {{ note.importance }} | {{ note.status }} | {{ note.storage_policy }}</p>
+        {% if note.public_summary %}
+          <p class="item-summary">{{ note.public_summary }}</p>
+        {% endif %}
+
+        <form class="inline-note-form" action="/premium" method="post">
+          <input type="hidden" name="note_id" value="{{ note.id }}">
+          <div class="source-grid">
+            <label>
+              Tickers
+              <input name="tickers" value="{{ note.tickers_text }}">
+            </label>
+            <label>
+              Importance
+              <input name="importance" type="number" min="1" max="5" value="{{ note.importance }}">
+            </label>
+            <label>
+              Status
+              <select name="status">
+                <option value="to_read" {% if note.status == "to_read" %}selected{% endif %}>To read</option>
+                <option value="read" {% if note.status == "read" %}selected{% endif %}>Read</option>
+                <option value="skipped" {% if note.status == "skipped" %}selected{% endif %}>Skipped</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            My Notes
+            <textarea name="user_note" rows="4">{{ note.user_note or "" }}</textarea>
+          </label>
+          <button type="submit" name="action" value="update_note">Save Note</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock %}

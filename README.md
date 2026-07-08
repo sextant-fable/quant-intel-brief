@@ -54,6 +54,8 @@ Available local routes:
 - `GET /reports`
 - `GET /reports/{report_id}`
 - `GET /sources`
+- `GET /premium`
+- `POST /premium`
 - `GET /settings/sources`
 - `POST /settings/sources`
 
@@ -130,6 +132,14 @@ http://127.0.0.1:8001/settings/llm
 ```
 
 The settings page saves the API key into the local `.env` file and does not display it after saving.
+
+Use Premium Sources for WSJ/Bloomberg-style reading workflows:
+
+```text
+http://127.0.0.1:8001/premium
+```
+
+This page collects public RSS metadata, lets you add reading links manually, and stores your own notes, tickers, and importance scores. It does not use login cookies, bypass paywalls, scrape premium full text, or store copyrighted article bodies.
 
 ## Repository Layout
 

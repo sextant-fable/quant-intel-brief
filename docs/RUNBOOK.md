@@ -157,6 +157,23 @@ Collector command tests use injected fake collectors and mocked adapter tests on
 pytest tests/test_collect_once.py tests/test_collectors.py
 ```
 
+## Premium Sources
+
+Use the local premium reading queue at:
+
+```text
+http://127.0.0.1:8001/premium
+```
+
+The page supports:
+
+- public RSS metadata collection into a premium reading queue;
+- manual WSJ/Bloomberg-style reading links;
+- user-authored notes, tickers, importance scores, and read status;
+- LLM-ready context made only from titles, links, public summaries, and user notes.
+
+The page does not use login cookies, bypass paywalls, scrape premium full text, or store copyrighted article bodies. Do not paste full article text into notes.
+
 ## Phase 8 Report And Email Checks
 
 Daily HTML report rendering and email preview/dry-run behavior are covered by:

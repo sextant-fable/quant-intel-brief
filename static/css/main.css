@@ -302,6 +302,47 @@ h2 {
   max-width: 860px;
 }
 
+.premium-grid .settings-form {
+  max-width: none;
+}
+
+.premium-list {
+  max-width: 960px;
+}
+
+.inline-note-form {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.inline-note-form label {
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  gap: 5px;
+}
+
+.inline-note-form input,
+.inline-note-form select,
+.inline-note-form textarea {
+  border: 1px solid #c7ced9;
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  min-height: 36px;
+  padding: 7px 9px;
+  width: 100%;
+}
+
+.inline-note-form textarea {
+  line-height: 1.45;
+  min-height: 82px;
+  resize: vertical;
+}
+
 .settings-help p {
   color: #3f4754;
   line-height: 1.55;

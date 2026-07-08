@@ -19,6 +19,7 @@ This document tracks planned source adapters and their legal/technical requireme
 | Stack Exchange | `app/collectors/stackexchange.py` | Phase 3 implemented | API key optional | Disabled by default; metadata-only question search adapter. |
 | QuantConnect | `app/collectors/quantconnect.py` | Phase 3 implemented | User ID and token | Metadata-only project adapter. Confirm permitted endpoints before live use. |
 | Premium Browser | `app/collectors/premium_browser.py` | Phase 3 implemented | User-authorized | Disabled by default; accepts metadata records only. No paywall bypass or redistribution. |
+| Premium Sources | `app/premium/queue.py` | Backlog implemented | Public RSS/manual links | Public metadata plus user notes only; no login cookies, paywall bypass, or full-text storage. |
 
 ## Source Rules
 
@@ -52,4 +53,5 @@ This document tracks planned source adapters and their legal/technical requireme
 - Stack Exchange is API-key optional and is enabled only when explicitly selected for a manual run.
 - Premium metadata intake is disabled by default and requires explicit authorization for each configured run.
 - Premium metadata rejects full-text fields such as article bodies, transcripts, HTML, Markdown, or exported content.
+- Premium Sources stores reading links, public summaries, and user-authored notes only.
 - Tests use fixtures and `respx`; no live social, video, community, premium, or platform API calls are made in tests.

@@ -8,15 +8,16 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.collectors.base import CollectorPersistenceSummary, CollectorStatus
 from app.core.config import Settings
 from app.core.timezones import UTC
-from app.db.models import ContentItem, Report, ReportSection, SourceStatus
+from app.db.models import ContentItem, PremiumSourceNote, Report, ReportSection, SourceStatus
 from app.db.session import create_db_engine
 from app.jobs.collect_once import CollectOnceResult
 from app.main import create_app
+from app.premium.queue import PremiumRssCollectResult
 
 
 def _client_with_session(env_path: Path | None = None) -> tuple[TestClient, Session]:
@@ -365,3 +366,97 @@ def test_source_settings_run_button_uses_manual_collect_without_live_http(
     assert "Collector runs" in response.text
     assert "New items" in response.text
     assert "fred-secret-key" not in response.text
+
+
+def test_premium_sources_page_adds_manual_link_and_user_note() -> None:
+    client, session = _client_with_session()
+
+    get_response = client.get("/premium")
+    post_response = client.post(
+        "/premium",
+        data={
+            "action": "add_manual",
+            "url": "https://www.wsj.com/articles/example",
+            "title": "WSJ market structure reading",
+            "publisher": "WSJ",
+            "public_summary": "Public metadata summary only.",
+            "user_note": "My note: compare this with ETF options flows.",
+            "tickers": "SPY, QQQ",
+            "importance": "5",
+            "status": "read",
+        },
+    )
+
+    with session:
+        notes = session.exec(select(PremiumSourceNote)).all()
+
+    assert get_response.status_code == 200
+    assert "Premium Sources" in get_response.text
+    assert post_response.status_code == 200
+    assert "WSJ market structure reading" in post_response.text
+    assert len(notes) == 1
+    assert notes[0].storage_policy == "user_notes_only"
+    assert notes[0].user_note == "My note: compare this with ETF options flows."
+    assert notes[0].tickers == ["QQQ", "SPY"]
+    assert not hasattr(notes[0], "full_text")
+
+
+def test_premium_sources_collect_rss_uses_injected_runner_without_live_http(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_path = tmp_path / ".env"
+    captured: dict[str, Any] = {}
+
+    async def fake_collect_premium_rss_feeds(
+        session: Session,
+        *,
+        feed_urls: str,
+        settings: Settings,
+    ) -> PremiumRssCollectResult:
+        captured["feed_urls"] = feed_urls
+        captured["max_items"] = settings.max_items_per_source
+        session.add(
+            PremiumSourceNote(
+                url="https://www.bloomberg.com/news/articles/example",
+                canonical_url="https://www.bloomberg.com/news/articles/example",
+                title="Bloomberg public RSS metadata item",
+                publisher="Bloomberg",
+                public_summary="Public metadata only.",
+            )
+        )
+        session.commit()
+        return PremiumRssCollectResult(
+            summaries=(
+                CollectorPersistenceSummary(
+                    source_name="premium_rss_1",
+                    status=CollectorStatus.SUCCESS,
+                    raw_items_seen=1,
+                    content_items_seen=1,
+                    skipped_duplicates=0,
+                ),
+            ),
+            queued_items=1,
+        )
+
+    monkeypatch.setattr(
+        "app.web.routes.collect_premium_rss_feeds",
+        fake_collect_premium_rss_feeds,
+    )
+    client, session = _client_with_session(env_path=env_path)
+    session.close()
+
+    response = client.post(
+        "/premium",
+        data={
+            "action": "collect_rss",
+            "premium_rss_feed_urls": "https://feeds.example.test/premium.xml",
+        },
+    )
+    env_text = env_path.read_text(encoding="utf-8")
+
+    assert response.status_code == 200
+    assert captured["feed_urls"] == "https://feeds.example.test/premium.xml"
+    assert "Queued links" in response.text
+    assert "Bloomberg public RSS metadata item" in response.text
+    assert "PREMIUM_RSS_FEED_URLS=https://feeds.example.test/premium.xml" in env_text

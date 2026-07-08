@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import SecretStr
+from sqlalchemy import desc
 from sqlmodel import Session, select
 
 from app.collectors.base import CollectorStatus
@@ -21,10 +22,17 @@ from app.core.source_settings import (
     load_source_settings,
     read_env_values,
     save_source_settings,
+    write_env_updates,
 )
 from app.core.timezones import utc_now
-from app.db.models import ContentItem, Report, ReportSection, SourceStatus
+from app.db.models import ContentItem, PremiumSourceNote, Report, ReportSection, SourceStatus
 from app.jobs.collect_once import SUPPORTED_SOURCES, CollectOnceResult, collect_once
+from app.premium.queue import (
+    PremiumRssCollectResult,
+    collect_premium_rss_feeds,
+    update_premium_note,
+    upsert_premium_note,
+)
 from app.web.filters import dashboard_filters_from_query, filter_content_items
 from app.web.view_models import (
     build_dashboard_view,
@@ -207,6 +215,95 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
             },
         )
 
+    @app.get("/premium", response_class=HTMLResponse, tags=["dashboard"])
+    def premium_sources(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request,
+            "premium_sources.html",
+            {
+                "settings": settings,
+                "view": _premium_sources_view(app),
+            },
+        )
+
+    @app.post("/premium", response_class=HTMLResponse, tags=["dashboard"])
+    async def save_premium_sources(request: Request) -> HTMLResponse:
+        form = _parse_form(await request.body())
+        action = form.get("action", "")
+        message: str | None = None
+        error: str | None = None
+        rss_result: PremiumRssCollectResult | None = None
+
+        if action in {"save_rss", "collect_rss"}:
+            feed_urls = form.get("premium_rss_feed_urls", "")
+            write_env_updates(
+                _env_path(app),
+                {"PREMIUM_RSS_FEED_URLS": feed_urls.strip()},
+                ("PREMIUM_RSS_FEED_URLS",),
+                header="Premium public RSS",
+            )
+            settings.premium_rss_feed_urls = feed_urls.strip() or None
+            message = "Premium RSS settings saved locally."
+            if action == "collect_rss":
+                if not feed_urls.strip():
+                    error = "Add at least one public RSS feed URL before collecting."
+                else:
+                    try:
+                        with Session(app.state.engine) as session:
+                            rss_result = await collect_premium_rss_feeds(
+                                session,
+                                feed_urls=feed_urls,
+                                settings=settings,
+                            )
+                    except Exception as exc:
+                        error = redact_text(f"Premium RSS collection failed: {exc}")
+
+        elif action == "add_manual":
+            with Session(app.state.engine) as session:
+                upsert_premium_note(
+                    session,
+                    url=form.get("url", ""),
+                    title=form.get("title", ""),
+                    publisher=form.get("publisher"),
+                    public_summary=form.get("public_summary"),
+                    user_note=form.get("user_note"),
+                    tickers=form.get("tickers"),
+                    importance=form.get("importance"),
+                    status=form.get("status", "to_read"),
+                )
+                session.commit()
+            message = "Premium reading item saved."
+
+        elif action == "update_note":
+            with Session(app.state.engine) as session:
+                note = update_premium_note(
+                    session,
+                    form.get("note_id", ""),
+                    user_note=form.get("user_note"),
+                    tickers=form.get("tickers"),
+                    importance=form.get("importance"),
+                    status=form.get("status", "to_read"),
+                )
+                if note is None:
+                    error = "Premium note was not found."
+                else:
+                    session.commit()
+                    message = "Premium note updated."
+
+        return templates.TemplateResponse(
+            request,
+            "premium_sources.html",
+            {
+                "settings": settings,
+                "view": _premium_sources_view(
+                    app,
+                    message=message,
+                    error=error,
+                    rss_result=rss_result,
+                ),
+            },
+        )
+
     @app.get("/dashboard/today", response_class=HTMLResponse, tags=["dashboard"])
     def dashboard_today(request: Request) -> HTMLResponse:
         with Session(app.state.engine) as session:
@@ -365,6 +462,33 @@ def _source_settings_view(
     }
 
 
+def _premium_sources_view(
+    app: FastAPI,
+    *,
+    message: str | None = None,
+    error: str | None = None,
+    rss_result: PremiumRssCollectResult | None = None,
+) -> dict[str, Any]:
+    values = read_env_values(_env_path(app))
+    with Session(app.state.engine) as session:
+        notes = list(
+            session.exec(
+                select(PremiumSourceNote).order_by(
+                    desc("importance"),
+                    desc("created_at"),
+                )
+            ).all()
+        )
+    return {
+        "message": message,
+        "error": error,
+        "rss_result": _premium_rss_result_view(rss_result),
+        "premium_rss_feed_urls": values.get("PREMIUM_RSS_FEED_URLS", ""),
+        "notes": [_premium_note_view(note) for note in notes],
+        "note_count": len(notes),
+    }
+
+
 def _apply_runtime_llm_settings(
     settings: Settings,
     saved: Any,
@@ -496,4 +620,39 @@ def _collect_once_result_view(result: CollectOnceResult | None) -> dict[str, Any
             }
             for summary in result.summaries
         ],
+    }
+
+
+def _premium_rss_result_view(result: PremiumRssCollectResult | None) -> dict[str, Any] | None:
+    if result is None:
+        return None
+    return {
+        "collector_count": len(result.summaries),
+        "queued_items": result.queued_items,
+        "summaries": [
+            {
+                "source_name": summary.source_name,
+                "status": summary.status.value,
+                "new_items": summary.content_items_seen,
+                "skipped_duplicates": summary.skipped_duplicates,
+                "is_failure": summary.status
+                not in {CollectorStatus.SUCCESS, CollectorStatus.EMPTY},
+            }
+            for summary in result.summaries
+        ],
+    }
+
+
+def _premium_note_view(note: PremiumSourceNote) -> dict[str, Any]:
+    return {
+        "id": note.id,
+        "url": note.url,
+        "title": note.title,
+        "publisher": note.publisher,
+        "public_summary": note.public_summary,
+        "user_note": note.user_note,
+        "tickers_text": ", ".join(note.tickers),
+        "importance": note.importance,
+        "status": note.status,
+        "storage_policy": note.storage_policy,
     }

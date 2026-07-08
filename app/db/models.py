@@ -224,6 +224,30 @@ class SourceStatus(SQLModel, table=True):
     last_checked_at: datetime = Field(default_factory=utc_now, nullable=False)
 
 
+class PremiumSourceNote(SQLModel, table=True):
+    """User-authored notes for premium-source reading queue items."""
+
+    __tablename__: ClassVar[str] = "premium_source_notes"
+    __table_args__: ClassVar[tuple[UniqueConstraint, ...]] = (
+        UniqueConstraint("canonical_url", name="uq_premium_source_notes_canonical_url"),
+    )
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    content_item_id: str | None = Field(default=None, foreign_key="content_items.id", index=True)
+    url: str
+    canonical_url: str = Field(index=True)
+    title: str
+    publisher: str | None = None
+    public_summary: str | None = None
+    user_note: str | None = None
+    tickers: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    importance: int = Field(default=3, ge=1, le=5)
+    status: str = Field(default="to_read", index=True)
+    storage_policy: str = Field(default="user_notes_only", index=True)
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+    updated_at: datetime | None = None
+
+
 __all__ = [
     "Cluster",
     "ContentItem",
@@ -234,6 +258,7 @@ __all__ = [
     "RawItem",
     "Report",
     "ReportSection",
+    "PremiumSourceNote",
     "Source",
     "SourceStatus",
     "new_id",

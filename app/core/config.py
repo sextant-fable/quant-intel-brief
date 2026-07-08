@@ -90,6 +90,7 @@ class Settings(BaseSettings):
     daily_run_time: str = "07:00"
     store_full_text: bool = False
     enable_premium_browser: bool = False
+    premium_rss_feed_urls: str | None = None
 
     def public_summary(self) -> dict[str, Any]:
         """Return non-secret settings safe for health and status responses."""
