@@ -97,7 +97,7 @@ Local dashboard configuration is available at:
 http://127.0.0.1:8001/settings/llm
 ```
 
-Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-compatible provider. The page writes to the local `.env` file, leaves saved API keys hidden, and does not test-call the provider.
+Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-compatible provider. The page writes to the local `.env` file, leaves saved API keys hidden, and does not test-call the provider. Legacy `DEEPSEEK_API_KEY` values are recognized and can be migrated by saving the page.
 
 ## Manual Collect Once
 
@@ -115,7 +115,17 @@ The same manual run can be started from the local dashboard:
 http://127.0.0.1:8001/settings/sources
 ```
 
-Use `Save Source Settings` to update local `.env` values. Use `Run Collect Once` to run only the checked sources. The page hides saved GitHub and FRED secrets after saving.
+Use `Save Source Settings` to update local `.env` values. Use `Run Collect Once` to run only the checked sources. The page hides saved secrets after saving and shows `saved` next to stored source keys.
+
+## Manual AI Report Generation
+
+After collection, open:
+
+```text
+http://127.0.0.1:8001/reports
+```
+
+Use `Generate AI Report` to summarize top-ranked local content with the configured OpenAI-compatible provider. This is a user-triggered LLM call. It does not send email, start the scheduler, bypass paywalls, or process premium full text.
 
 Useful local `.env` settings:
 

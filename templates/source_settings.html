@@ -122,6 +122,7 @@
 
     <label>
       FRED API Key
+      {% if view.has_fred_api_key %}<span class="field-hint">saved</span>{% endif %}
       <input
         name="fred_api_key"
         type="password"
@@ -161,6 +162,7 @@
 
     <label>
       NewsAPI Key
+      {% if view.has_newsapi_key %}<span class="field-hint">saved</span>{% endif %}
       <input
         name="newsapi_key"
         type="password"
@@ -176,6 +178,7 @@
 
     <label>
       Alpha Vantage API Key
+      {% if view.has_alphavantage_api_key %}<span class="field-hint">saved</span>{% endif %}
       <input
         name="alphavantage_api_key"
         type="password"
@@ -191,6 +194,7 @@
 
     <label>
       Finnhub API Key
+      {% if view.has_finnhub_api_key %}<span class="field-hint">saved</span>{% endif %}
       <input
         name="finnhub_api_key"
         type="password"

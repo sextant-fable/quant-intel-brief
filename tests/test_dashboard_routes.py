@@ -16,6 +16,8 @@ from app.core.timezones import UTC
 from app.db.models import ContentItem, PremiumSourceNote, Report, ReportSection, SourceStatus
 from app.db.session import create_db_engine
 from app.jobs.collect_once import CollectOnceResult
+from app.jobs.generate_ai_report import AiReportGenerationResult
+from app.jobs.run_daily import DailyRunResult
 from app.main import create_app
 from app.premium.queue import PremiumRssCollectResult
 
@@ -217,6 +219,31 @@ def test_llm_settings_blank_key_preserves_existing_key(tmp_path: Path) -> None:
     assert "existing-key" not in response.text
     assert "LLM_API_KEY=existing-key" in env_text
     assert "LLM_PROVIDER=kimi" in env_text
+
+
+def test_llm_settings_recognizes_and_migrates_legacy_deepseek_key(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text("DEEPSEEK_API_KEY=legacy-deepseek-key\n", encoding="utf-8")
+    client, session = _client_with_session(env_path=env_path)
+    session.close()
+
+    get_response = client.get("/settings/llm")
+    post_response = client.post(
+        "/settings/llm",
+        data={
+            "provider": "deepseek",
+            "api_key": "",
+            "base_url": "https://api.deepseek.com",
+            "model": "deepseek-chat",
+        },
+    )
+    env_text = env_path.read_text(encoding="utf-8")
+
+    assert get_response.status_code == 200
+    assert "API key saved" in get_response.text
+    assert post_response.status_code == 200
+    assert "legacy-deepseek-key" not in post_response.text
+    assert "LLM_API_KEY=legacy-deepseek-key" in env_text
 
 
 def test_source_settings_page_saves_local_env_without_echoing_secrets(tmp_path: Path) -> None:
@@ -460,3 +487,56 @@ def test_premium_sources_collect_rss_uses_injected_runner_without_live_http(
     assert "Queued links" in response.text
     assert "Bloomberg public RSS metadata item" in response.text
     assert "PREMIUM_RSS_FEED_URLS=https://feeds.example.test/premium.xml" in env_text
+
+
+def test_reports_page_generate_ai_uses_injected_runner_without_live_llm(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_generate_ai_report_from_local_content(
+        session: Session,
+        *,
+        settings: Settings,
+        **_: Any,
+    ) -> AiReportGenerationResult:
+        captured["provider"] = settings.llm_provider
+        session.add(
+            Report(
+                id="generated-report",
+                report_date=datetime(2026, 7, 8, 12, 0, tzinfo=UTC),
+                title="Generated Report",
+                status="draft",
+                source_coverage_note="1 summarized event included.",
+            )
+        )
+        session.commit()
+        return AiReportGenerationResult(
+            report=DailyRunResult(
+                report_id="generated-report",
+                status="draft",
+                collector_count=0,
+                source_failure_count=0,
+                html_path=None,
+                delivery_status=None,
+                source_coverage_note="1 summarized event included.",
+            ),
+            source_item_count=5,
+            ranked_event_count=1,
+            successful_summary_count=1,
+            failed_summary_count=0,
+        )
+
+    monkeypatch.setattr(
+        "app.web.routes.generate_ai_report_from_local_content",
+        fake_generate_ai_report_from_local_content,
+    )
+    client, session = _client_with_session()
+    session.close()
+
+    response = client.post("/reports/generate-ai")
+
+    assert response.status_code == 200
+    assert captured["provider"] == "deepseek"
+    assert "AI report generated from 5 local item" in response.text
+    assert "Generated Report" in response.text

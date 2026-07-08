@@ -61,11 +61,16 @@ def load_llm_settings(env_path: Path) -> SavedLlmSettings:
     values = _read_env_values(env_path)
     provider = values.get("LLM_PROVIDER") or "deepseek"
     preset = LLM_PROVIDER_PRESETS.get(provider, LLM_PROVIDER_PRESETS["custom"])
+    base_url = values.get("LLM_BASE_URL")
+    model = values.get("LLM_MODEL")
+    if provider == "deepseek":
+        base_url = base_url or values.get("DEEPSEEK_BASE_URL")
+        model = model or values.get("DEEPSEEK_MODEL")
     return SavedLlmSettings(
         provider=provider,
-        base_url=values.get("LLM_BASE_URL") or preset.base_url,
-        model=values.get("LLM_MODEL") or preset.model,
-        has_api_key=bool(values.get("LLM_API_KEY")),
+        base_url=base_url or preset.base_url,
+        model=model or preset.model,
+        has_api_key=bool(values.get("LLM_API_KEY") or values.get("DEEPSEEK_API_KEY")),
     )
 
 
@@ -90,7 +95,7 @@ def save_llm_settings(
     elif api_key:
         stored_key = api_key
     else:
-        stored_key = existing.get("LLM_API_KEY", "")
+        stored_key = existing.get("LLM_API_KEY", "") or existing.get("DEEPSEEK_API_KEY", "")
 
     updates = {
         "LLM_PROVIDER": provider,
@@ -98,6 +103,8 @@ def save_llm_settings(
         "LLM_BASE_URL": base_url,
         "LLM_MODEL": model,
     }
+    if clear_api_key:
+        updates["DEEPSEEK_API_KEY"] = ""
     _write_env_updates(env_path, updates)
     return SavedLlmSettings(
         provider=provider,

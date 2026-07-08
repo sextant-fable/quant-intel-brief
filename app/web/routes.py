@@ -27,6 +27,10 @@ from app.core.source_settings import (
 from app.core.timezones import utc_now
 from app.db.models import ContentItem, PremiumSourceNote, Report, ReportSection, SourceStatus
 from app.jobs.collect_once import SUPPORTED_SOURCES, CollectOnceResult, collect_once
+from app.jobs.generate_ai_report import (
+    AiReportGenerationResult,
+    generate_ai_report_from_local_content,
+)
 from app.premium.queue import (
     PremiumRssCollectResult,
     collect_premium_rss_feeds,
@@ -353,6 +357,39 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
             {"settings": settings, "view": view},
         )
 
+    @app.post("/reports/generate-ai", response_class=HTMLResponse, tags=["dashboard"])
+    def generate_ai_report(request: Request) -> HTMLResponse:
+        message: str | None = None
+        error: str | None = None
+        result: AiReportGenerationResult | None = None
+        _refresh_runtime_llm_settings(app, settings)
+        try:
+            with Session(app.state.engine) as session:
+                result = generate_ai_report_from_local_content(
+                    session,
+                    settings=settings,
+                    reports_dir=Path("data/reports"),
+                )
+                reports_view = build_reports_view(session.exec(select(Report)).all())
+            message = (
+                f"AI report generated from {result.source_item_count} local item(s): "
+                f"{result.successful_summary_count} summarized, "
+                f"{result.failed_summary_count} failed."
+            )
+        except Exception as exc:
+            error = redact_text(f"AI report generation failed: {exc}")
+            with Session(app.state.engine) as session:
+                reports_view = build_reports_view(session.exec(select(Report)).all())
+
+        reports_view["message"] = message
+        reports_view["error"] = error
+        reports_view["generate_result"] = _ai_report_result_view(result)
+        return templates.TemplateResponse(
+            request,
+            "reports.html",
+            {"settings": settings, "view": reports_view},
+        )
+
     @app.get("/reports/{report_id}", response_class=HTMLResponse, tags=["dashboard"])
     def report_detail(request: Request, report_id: str) -> HTMLResponse:
         with Session(app.state.engine) as session:
@@ -396,7 +433,11 @@ def _llm_settings_view(
         "provider": saved_settings.provider or settings.llm_provider,
         "base_url": saved_settings.base_url or settings.llm_base_url,
         "model": saved_settings.model or settings.llm_model,
-        "has_api_key": saved_settings.has_api_key or settings.llm_api_key is not None,
+        "has_api_key": (
+            saved_settings.has_api_key
+            or settings.llm_api_key is not None
+            or settings.deepseek_api_key is not None
+        ),
         "presets": [preset for preset in LLM_PROVIDER_PRESETS.values()],
     }
 
@@ -503,6 +544,18 @@ def _apply_runtime_llm_settings(
         settings.llm_api_key = None
     elif api_key.strip():
         settings.llm_api_key = SecretStr(api_key.strip())
+
+
+def _refresh_runtime_llm_settings(app: FastAPI, settings: Settings) -> None:
+    values = read_env_values(_env_path(app))
+    saved = load_llm_settings(_env_path(app))
+    settings.llm_provider = saved.provider
+    settings.llm_base_url = saved.base_url
+    settings.llm_model = saved.model
+    if values.get("LLM_API_KEY"):
+        settings.llm_api_key = SecretStr(values["LLM_API_KEY"])
+    elif values.get("DEEPSEEK_API_KEY"):
+        settings.deepseek_api_key = SecretStr(values["DEEPSEEK_API_KEY"])
 
 
 def _apply_runtime_source_settings(
@@ -620,6 +673,19 @@ def _collect_once_result_view(result: CollectOnceResult | None) -> dict[str, Any
             }
             for summary in result.summaries
         ],
+    }
+
+
+def _ai_report_result_view(result: AiReportGenerationResult | None) -> dict[str, Any] | None:
+    if result is None:
+        return None
+    return {
+        "report_id": result.report.report_id,
+        "source_item_count": result.source_item_count,
+        "ranked_event_count": result.ranked_event_count,
+        "successful_summary_count": result.successful_summary_count,
+        "failed_summary_count": result.failed_summary_count,
+        "html_path": result.report.html_path,
     }
 
 

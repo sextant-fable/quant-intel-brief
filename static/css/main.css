@@ -348,6 +348,12 @@ h2 {
   line-height: 1.55;
 }
 
+.field-hint {
+  color: var(--ok);
+  font-size: 12px;
+  font-weight: 650;
+}
+
 button,
 .button-secondary {
   align-items: center;

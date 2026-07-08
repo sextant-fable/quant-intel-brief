@@ -91,6 +91,14 @@ This command is user-triggered only. It writes metadata and source status rows i
 http://127.0.0.1:8001/settings/sources
 ```
 
+After content is collected, generate a DeepSeek/OpenAI-compatible draft report manually from:
+
+```text
+http://127.0.0.1:8001/reports
+```
+
+The `Generate AI Report` button summarizes top-ranked local metadata records only. It does not send email or run the scheduler.
+
 Configure source targets and credentials in `.env` or from the local source settings page:
 
 ```bash

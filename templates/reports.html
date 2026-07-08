@@ -7,8 +7,20 @@
       <p class="eyebrow">Local archive</p>
       <h1>Reports</h1>
     </div>
-    <p class="timestamp">{{ view.report_count }} report{{ "" if view.report_count == 1 else "s" }}</p>
+    <form action="/reports/generate-ai" method="post">
+      <button type="submit">Generate AI Report</button>
+    </form>
   </section>
+
+  {% if view.message %}
+    <p class="notice">{{ view.message }}</p>
+  {% endif %}
+
+  {% if view.error %}
+    <p class="notice notice-error">{{ view.error }}</p>
+  {% endif %}
+
+  <p class="timestamp">{{ view.report_count }} report{{ "" if view.report_count == 1 else "s" }}</p>
 
   {% if view.reports %}
     <div class="table-wrap">
