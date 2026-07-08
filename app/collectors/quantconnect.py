@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 from datetime import datetime
 from typing import Any
 
@@ -58,10 +60,7 @@ class QuantConnectCollector(SourceCollector):
         fetch = await self.fetch_json(
             self.endpoint,
             params=params,
-            headers={
-                "X-QC-User-Id": self.user_id,
-                "X-QC-Api-Token": self.api_token,
-            },
+            headers=self._auth_headers(fetched_at),
             client=client,
         )
         if fetch.status != CollectorStatus.SUCCESS:
@@ -138,6 +137,17 @@ class QuantConnectCollector(SourceCollector):
             fetched_at=fetched_at,
             items=items or [],
         )
+
+    def _auth_headers(self, fetched_at: datetime) -> dict[str, str]:
+        timestamp = str(int(fetched_at.timestamp()))
+        token_hash = hashlib.sha256(f"{self.api_token}:{timestamp}".encode()).hexdigest()
+        credentials = base64.b64encode(f"{self.user_id}:{token_hash}".encode()).decode(
+            "ascii"
+        )
+        return {
+            "Authorization": f"Basic {credentials}",
+            "Timestamp": timestamp,
+        }
 
 
 __all__ = ["QuantConnectCollector"]
