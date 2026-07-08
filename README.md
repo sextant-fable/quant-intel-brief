@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 10 local job orchestration, retention cleanup, and optional scheduler boundaries are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, local dashboard pages, tested local operations jobs, and a manual collect-once command for selected public/official sources.
+Phase 10 local job orchestration, retention cleanup, and optional scheduler boundaries are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, local dashboard pages, tested local operations jobs, and a manual collect-once command/page for public, official, market API, community, and platform sources.
 
 ## Intended Workflow
 
@@ -81,6 +81,8 @@ Run selected live collectors manually with:
 python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
 ```
 
+Supported source names are `rss`, `sec_edgar`, `arxiv`, `github`, `fred`, `newsapi`, `gdelt`, `alphavantage`, `finnhub`, `reddit`, `youtube`, `x_api`, `stackexchange`, and `quantconnect`.
+
 This command is user-triggered only. It writes metadata and source status rows into local SQLite, but it does not run the scheduler, call an LLM, generate summaries, or send email. You can also configure and run the same manual collection from:
 
 ```text
@@ -98,6 +100,16 @@ GITHUB_QUERY=quant finance language:Python
 GITHUB_TOKEN=
 FRED_API_KEY=
 FRED_SERIES_ID=FEDFUNDS
+NEWSAPI_KEY=
+ALPHAVANTAGE_API_KEY=
+FINNHUB_API_KEY=
+REDDIT_ACCESS_TOKEN=
+REDDIT_USER_AGENT=
+YOUTUBE_API_KEY=
+X_BEARER_TOKEN=
+STACKEXCHANGE_SITE=quant
+QUANTCONNECT_USER_ID=
+QUANTCONNECT_TOKEN=
 ```
 
 For LLM providers, use OpenAI-compatible settings in `.env`:

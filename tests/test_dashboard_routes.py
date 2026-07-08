@@ -241,6 +241,27 @@ def test_source_settings_page_saves_local_env_without_echoing_secrets(tmp_path: 
             "github_token": "github-secret-token",
             "fred_api_key": "fred-secret-key",
             "fred_series_id": "CPIAUCSL",
+            "newsapi_key": "newsapi-secret-key",
+            "newsapi_query": "ETF options",
+            "gdelt_query": "systematic trading",
+            "alphavantage_api_key": "alpha-secret-key",
+            "alphavantage_topics": "financial_markets",
+            "finnhub_api_key": "finnhub-secret-key",
+            "finnhub_category": "forex",
+            "reddit_access_token": "reddit-secret-token",
+            "reddit_user_agent": "quant-intel-test",
+            "reddit_query": "factor investing",
+            "reddit_subreddit": "algotrading",
+            "youtube_api_key": "youtube-secret-key",
+            "youtube_query": "quant research",
+            "x_bearer_token": "x-secret-token",
+            "x_query": "quant finance lang:en",
+            "stackexchange_key": "stack-secret-key",
+            "stackexchange_query": "factor model",
+            "stackexchange_site": "quant",
+            "quantconnect_user_id": "qc-secret-user",
+            "quantconnect_token": "qc-secret-token",
+            "quantconnect_organization_id": "qc-org",
         },
     )
     env_text = env_path.read_text(encoding="utf-8")
@@ -251,6 +272,15 @@ def test_source_settings_page_saves_local_env_without_echoing_secrets(tmp_path: 
     assert "Source settings saved locally" in post_response.text
     assert "github-secret-token" not in post_response.text
     assert "fred-secret-key" not in post_response.text
+    assert "newsapi-secret-key" not in post_response.text
+    assert "alpha-secret-key" not in post_response.text
+    assert "finnhub-secret-key" not in post_response.text
+    assert "reddit-secret-token" not in post_response.text
+    assert "youtube-secret-key" not in post_response.text
+    assert "x-secret-token" not in post_response.text
+    assert "stack-secret-key" not in post_response.text
+    assert "qc-secret-user" not in post_response.text
+    assert "qc-secret-token" not in post_response.text
     assert (
         "RSS_FEED_URLS=https://feeds.example.test/a.xml,https://feeds.example.test/b.xml"
         in env_text
@@ -258,6 +288,15 @@ def test_source_settings_page_saves_local_env_without_echoing_secrets(tmp_path: 
     assert "SEC_USER_AGENT=quant-intel-test contact@example.test" in env_text
     assert "GITHUB_TOKEN=github-secret-token" in env_text
     assert "FRED_API_KEY=fred-secret-key" in env_text
+    assert "NEWSAPI_KEY=newsapi-secret-key" in env_text
+    assert "ALPHAVANTAGE_API_KEY=alpha-secret-key" in env_text
+    assert "FINNHUB_API_KEY=finnhub-secret-key" in env_text
+    assert "REDDIT_ACCESS_TOKEN=reddit-secret-token" in env_text
+    assert "YOUTUBE_API_KEY=youtube-secret-key" in env_text
+    assert "X_BEARER_TOKEN=x-secret-token" in env_text
+    assert "STACKEXCHANGE_KEY=stack-secret-key" in env_text
+    assert "QUANTCONNECT_USER_ID=qc-secret-user" in env_text
+    assert "QUANTCONNECT_TOKEN=qc-secret-token" in env_text
 
 
 def test_source_settings_run_button_uses_manual_collect_without_live_http(

@@ -12,6 +12,7 @@ from app.db.models import ContentItem, SourceStatus
 from app.db.session import create_db_engine, init_db
 from app.jobs.collect_once import (
     DEFAULT_SOURCES,
+    SUPPORTED_SOURCES,
     build_collectors,
     collect_once,
     parse_sources,
@@ -28,6 +29,25 @@ def test_parse_sources_defaults_and_validates_supported_names() -> None:
         parse_sources("rss,unknown")
 
 
+def test_supported_sources_include_public_market_and_community_adapters() -> None:
+    assert SUPPORTED_SOURCES == (
+        "rss",
+        "sec_edgar",
+        "arxiv",
+        "github",
+        "fred",
+        "newsapi",
+        "gdelt",
+        "alphavantage",
+        "finnhub",
+        "reddit",
+        "youtube",
+        "x_api",
+        "stackexchange",
+        "quantconnect",
+    )
+
+
 def test_build_collectors_uses_local_settings_without_collecting() -> None:
     settings = Settings(
         rss_feed_urls="https://feeds.example.test/a.xml,https://feeds.example.test/b.xml",
@@ -37,9 +57,30 @@ def test_build_collectors_uses_local_settings_without_collecting() -> None:
         github_query="topic:backtesting language:Python",
         fred_api_key=SecretStr("fixture-key"),
         fred_series_id="CPIAUCSL",
+        newsapi_key=SecretStr("fixture-newsapi"),
+        newsapi_query="ETF options",
+        gdelt_query="systematic trading",
+        alphavantage_api_key=SecretStr("fixture-alpha"),
+        alphavantage_topics="financial_markets",
+        finnhub_api_key=SecretStr("fixture-finnhub"),
+        finnhub_category="forex",
+        reddit_access_token=SecretStr("fixture-reddit"),
+        reddit_user_agent="quant-intel-test",
+        reddit_query="factor investing",
+        reddit_subreddit="algotrading",
+        youtube_api_key=SecretStr("fixture-youtube"),
+        youtube_query="quant research",
+        x_bearer_token=SecretStr("fixture-x"),
+        x_query="quant finance lang:en",
+        stackexchange_key=SecretStr("fixture-stack"),
+        stackexchange_query="factor model",
+        stackexchange_site="quant",
+        quantconnect_user_id=SecretStr("fixture-user"),
+        quantconnect_token=SecretStr("fixture-token"),
+        quantconnect_organization_id="fixture-org",
     )
 
-    collectors = build_collectors(settings, ("rss", "sec_edgar", "arxiv", "github", "fred"))
+    collectors = build_collectors(settings, SUPPORTED_SOURCES)
 
     assert [collector.source_name for collector in collectors] == [
         "rss_1",
@@ -48,6 +89,15 @@ def test_build_collectors_uses_local_settings_without_collecting() -> None:
         "arxiv",
         "github",
         "fred",
+        "newsapi",
+        "gdelt",
+        "alphavantage",
+        "finnhub",
+        "reddit",
+        "youtube",
+        "x_api",
+        "stackexchange",
+        "quantconnect",
     ]
 
 

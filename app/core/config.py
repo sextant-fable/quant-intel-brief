@@ -38,9 +38,13 @@ class Settings(BaseSettings):
     deepseek_model: str = "deepseek-chat"
 
     newsapi_key: SecretStr | None = None
+    newsapi_query: str = "quant finance OR ETF OR options"
     gdelt_api_key: SecretStr | None = None
+    gdelt_query: str = "quant finance"
     alphavantage_api_key: SecretStr | None = None
+    alphavantage_topics: str = "financial_markets,economy_macro"
     finnhub_api_key: SecretStr | None = None
+    finnhub_category: str = "general"
     rss_feed_urls: str | None = None
     fred_api_key: SecretStr | None = None
     fred_series_id: str = "FEDFUNDS"
@@ -54,9 +58,15 @@ class Settings(BaseSettings):
     reddit_client_secret: SecretStr | None = None
     reddit_access_token: SecretStr | None = None
     reddit_user_agent: str | None = None
+    reddit_query: str = "quant finance OR algotrading"
+    reddit_subreddit: str | None = None
     youtube_api_key: SecretStr | None = None
+    youtube_query: str = "quant finance"
     x_bearer_token: SecretStr | None = None
+    x_query: str = "quant finance lang:en"
     stackexchange_key: SecretStr | None = None
+    stackexchange_query: str = "quant finance"
+    stackexchange_site: str = "quant"
     quantconnect_user_id: SecretStr | None = None
     quantconnect_token: SecretStr | None = None
     quantconnect_organization_id: str | None = None

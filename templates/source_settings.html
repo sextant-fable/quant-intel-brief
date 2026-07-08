@@ -135,6 +135,209 @@
       Clear saved FRED API key
     </label>
 
+    <h2>Market and News APIs</h2>
+
+    <div class="source-grid">
+      <label>
+        NewsAPI Query
+        <input name="newsapi_query" value="{{ view.newsapi_query }}">
+      </label>
+
+      <label>
+        GDELT Query
+        <input name="gdelt_query" value="{{ view.gdelt_query }}">
+      </label>
+
+      <label>
+        Alpha Vantage Topics
+        <input name="alphavantage_topics" value="{{ view.alphavantage_topics }}">
+      </label>
+
+      <label>
+        Finnhub Category
+        <input name="finnhub_category" value="{{ view.finnhub_category }}">
+      </label>
+    </div>
+
+    <label>
+      NewsAPI Key
+      <input
+        name="newsapi_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_newsapi_key %}Leave blank to keep saved key{% else %}Required for NewsAPI{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_newsapi_key" type="checkbox">
+      Clear saved NewsAPI key
+    </label>
+
+    <label>
+      Alpha Vantage API Key
+      <input
+        name="alphavantage_api_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_alphavantage_api_key %}Leave blank to keep saved key{% else %}Required for Alpha Vantage{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_alphavantage_api_key" type="checkbox">
+      Clear saved Alpha Vantage key
+    </label>
+
+    <label>
+      Finnhub API Key
+      <input
+        name="finnhub_api_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_finnhub_api_key %}Leave blank to keep saved key{% else %}Required for Finnhub{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_finnhub_api_key" type="checkbox">
+      Clear saved Finnhub key
+    </label>
+
+    <h2>Community and Platform APIs</h2>
+
+    <div class="source-grid">
+      <label>
+        Reddit User Agent
+        <input name="reddit_user_agent" value="{{ view.reddit_user_agent }}" placeholder="quant-intel-brief by u/yourname">
+      </label>
+
+      <label>
+        Reddit Query
+        <input name="reddit_query" value="{{ view.reddit_query }}">
+      </label>
+
+      <label>
+        Reddit Subreddit
+        <input name="reddit_subreddit" value="{{ view.reddit_subreddit }}" placeholder="algotrading">
+      </label>
+
+      <label>
+        YouTube Query
+        <input name="youtube_query" value="{{ view.youtube_query }}">
+      </label>
+
+      <label>
+        X Query
+        <input name="x_query" value="{{ view.x_query }}">
+      </label>
+
+      <label>
+        StackExchange Site
+        <input name="stackexchange_site" value="{{ view.stackexchange_site }}">
+      </label>
+
+      <label>
+        StackExchange Query
+        <input name="stackexchange_query" value="{{ view.stackexchange_query }}">
+      </label>
+
+      <label>
+        QuantConnect Organization ID
+        <input name="quantconnect_organization_id" value="{{ view.quantconnect_organization_id }}">
+      </label>
+    </div>
+
+    <label>
+      Reddit Access Token
+      <input
+        name="reddit_access_token"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_reddit_access_token %}Leave blank to keep saved token{% else %}Required for Reddit{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_reddit_access_token" type="checkbox">
+      Clear saved Reddit token
+    </label>
+
+    <label>
+      YouTube API Key
+      <input
+        name="youtube_api_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_youtube_api_key %}Leave blank to keep saved key{% else %}Required for YouTube{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_youtube_api_key" type="checkbox">
+      Clear saved YouTube key
+    </label>
+
+    <label>
+      X Bearer Token
+      <input
+        name="x_bearer_token"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_x_bearer_token %}Leave blank to keep saved token{% else %}Required for X API{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_x_bearer_token" type="checkbox">
+      Clear saved X bearer token
+    </label>
+
+    <label>
+      StackExchange API Key
+      <input
+        name="stackexchange_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_stackexchange_key %}Leave blank to keep saved key{% else %}Optional{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_stackexchange_key" type="checkbox">
+      Clear saved StackExchange key
+    </label>
+
+    <label>
+      QuantConnect User ID
+      <input
+        name="quantconnect_user_id"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_quantconnect_user_id %}Leave blank to keep saved user ID{% else %}Required for QuantConnect{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_quantconnect_user_id" type="checkbox">
+      Clear saved QuantConnect user ID
+    </label>
+
+    <label>
+      QuantConnect Token
+      <input
+        name="quantconnect_token"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_quantconnect_token %}Leave blank to keep saved token{% else %}Required for QuantConnect{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_quantconnect_token" type="checkbox">
+      Clear saved QuantConnect token
+    </label>
+
     <div class="settings-actions">
       <button type="submit" name="action" value="save">Save Source Settings</button>
       <button type="submit" name="action" value="run">Run Collect Once</button>

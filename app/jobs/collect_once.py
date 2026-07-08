@@ -12,6 +12,7 @@ from typing import Protocol
 from pydantic import SecretStr
 from sqlmodel import Session
 
+from app.collectors.alphavantage import AlphaVantageCollector
 from app.collectors.arxiv import ArxivCollector
 from app.collectors.base import (
     CollectorConfig,
@@ -21,16 +22,36 @@ from app.collectors.base import (
     SourceCollector,
     persist_collector_result,
 )
+from app.collectors.finnhub import FinnhubCollector
 from app.collectors.fred import FredCollector
+from app.collectors.gdelt import GdeltCollector
 from app.collectors.github import GitHubCollector
+from app.collectors.newsapi import NewsApiCollector
+from app.collectors.quantconnect import QuantConnectCollector
+from app.collectors.reddit import RedditCollector
 from app.collectors.rss import RssCollector
 from app.collectors.sec_edgar import SecEdgarCollector
+from app.collectors.stackexchange import StackExchangeCollector
+from app.collectors.x_api import XApiCollector
+from app.collectors.youtube import YouTubeCollector
 from app.core.config import Settings, get_settings
 from app.core.timezones import utc_now
 from app.db.session import create_db_engine, init_db
 
-SUPPORTED_SOURCES = ("rss", "sec_edgar", "arxiv", "github", "fred")
-DEFAULT_SOURCES = SUPPORTED_SOURCES
+CORE_SOURCES = ("rss", "sec_edgar", "arxiv", "github", "fred")
+SUPPORTED_SOURCES = (
+    *CORE_SOURCES,
+    "newsapi",
+    "gdelt",
+    "alphavantage",
+    "finnhub",
+    "reddit",
+    "youtube",
+    "x_api",
+    "stackexchange",
+    "quantconnect",
+)
+DEFAULT_SOURCES = CORE_SOURCES
 
 
 class CollectorLike(Protocol):
@@ -137,6 +158,77 @@ def build_collectors(
                 FredCollector(
                     api_key=_secret_value(settings.fred_api_key),
                     series_id=settings.fred_series_id,
+                    config=config,
+                )
+            )
+        elif source_name == "newsapi":
+            collectors.append(
+                NewsApiCollector(
+                    api_key=_secret_value(settings.newsapi_key),
+                    query=settings.newsapi_query,
+                    config=config,
+                )
+            )
+        elif source_name == "gdelt":
+            collectors.append(GdeltCollector(query=settings.gdelt_query, config=config))
+        elif source_name == "alphavantage":
+            collectors.append(
+                AlphaVantageCollector(
+                    api_key=_secret_value(settings.alphavantage_api_key),
+                    topics=settings.alphavantage_topics,
+                    config=config,
+                )
+            )
+        elif source_name == "finnhub":
+            collectors.append(
+                FinnhubCollector(
+                    api_key=_secret_value(settings.finnhub_api_key),
+                    category=settings.finnhub_category,
+                    config=config,
+                )
+            )
+        elif source_name == "reddit":
+            collectors.append(
+                RedditCollector(
+                    access_token=_secret_value(settings.reddit_access_token),
+                    user_agent=settings.reddit_user_agent,
+                    query=settings.reddit_query,
+                    subreddit=settings.reddit_subreddit,
+                    config=config,
+                )
+            )
+        elif source_name == "youtube":
+            collectors.append(
+                YouTubeCollector(
+                    api_key=_secret_value(settings.youtube_api_key),
+                    query=settings.youtube_query,
+                    config=config,
+                )
+            )
+        elif source_name == "x_api":
+            collectors.append(
+                XApiCollector(
+                    bearer_token=_secret_value(settings.x_bearer_token),
+                    query=settings.x_query,
+                    config=config,
+                )
+            )
+        elif source_name == "stackexchange":
+            collectors.append(
+                StackExchangeCollector(
+                    enabled=True,
+                    api_key=_secret_value(settings.stackexchange_key),
+                    query=settings.stackexchange_query,
+                    site=settings.stackexchange_site,
+                    config=config,
+                )
+            )
+        elif source_name == "quantconnect":
+            collectors.append(
+                QuantConnectCollector(
+                    user_id=_secret_value(settings.quantconnect_user_id),
+                    api_token=_secret_value(settings.quantconnect_token),
+                    organization_id=settings.quantconnect_organization_id,
                     config=config,
                 )
             )
@@ -294,6 +386,7 @@ class StaticResultCollector(SourceCollector):
 __all__ = [
     "CollectOnceResult",
     "CollectorLike",
+    "CORE_SOURCES",
     "DEFAULT_SOURCES",
     "SUPPORTED_SOURCES",
     "StaticResultCollector",

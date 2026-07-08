@@ -41,6 +41,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add local dashboard page for saving LLM API settings.
 - [x] Add manual collect-once command for RSS, SEC EDGAR, arXiv, GitHub, and FRED.
 - [x] Add local dashboard page for source settings and manual collect-once runs.
+- [x] Expand manual collect-once to market API, community, and QuantConnect sources.
 
 ## Phase 0 Done Criteria
 

@@ -137,13 +137,42 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
             fred_api_key=form.get("fred_api_key"),
             clear_fred_api_key=form.get("clear_fred_api_key") == "on",
             fred_series_id=form.get("fred_series_id", ""),
+            newsapi_key=form.get("newsapi_key"),
+            clear_newsapi_key=form.get("clear_newsapi_key") == "on",
+            newsapi_query=form.get("newsapi_query", ""),
+            gdelt_query=form.get("gdelt_query", ""),
+            alphavantage_api_key=form.get("alphavantage_api_key"),
+            clear_alphavantage_api_key=form.get("clear_alphavantage_api_key") == "on",
+            alphavantage_topics=form.get("alphavantage_topics", ""),
+            finnhub_api_key=form.get("finnhub_api_key"),
+            clear_finnhub_api_key=form.get("clear_finnhub_api_key") == "on",
+            finnhub_category=form.get("finnhub_category", ""),
+            reddit_access_token=form.get("reddit_access_token"),
+            clear_reddit_access_token=form.get("clear_reddit_access_token") == "on",
+            reddit_user_agent=form.get("reddit_user_agent", ""),
+            reddit_query=form.get("reddit_query", ""),
+            reddit_subreddit=form.get("reddit_subreddit", ""),
+            youtube_api_key=form.get("youtube_api_key"),
+            clear_youtube_api_key=form.get("clear_youtube_api_key") == "on",
+            youtube_query=form.get("youtube_query", ""),
+            x_bearer_token=form.get("x_bearer_token"),
+            clear_x_bearer_token=form.get("clear_x_bearer_token") == "on",
+            x_query=form.get("x_query", ""),
+            stackexchange_key=form.get("stackexchange_key"),
+            clear_stackexchange_key=form.get("clear_stackexchange_key") == "on",
+            stackexchange_query=form.get("stackexchange_query", ""),
+            stackexchange_site=form.get("stackexchange_site", ""),
+            quantconnect_user_id=form.get("quantconnect_user_id"),
+            clear_quantconnect_user_id=form.get("clear_quantconnect_user_id") == "on",
+            quantconnect_token=form.get("quantconnect_token"),
+            clear_quantconnect_token=form.get("clear_quantconnect_token") == "on",
+            quantconnect_organization_id=form.get("quantconnect_organization_id", ""),
         )
         _apply_runtime_source_settings(
             app,
             settings,
             saved,
-            clear_github_token=form.get("clear_github_token") == "on",
-            clear_fred_api_key=form.get("clear_fred_api_key") == "on",
+            form=form,
         )
 
         run_result: CollectOnceResult | None = None
@@ -294,6 +323,42 @@ def _source_settings_view(
         "has_github_token": saved_settings.has_github_token or settings.github_token is not None,
         "has_fred_api_key": saved_settings.has_fred_api_key or settings.fred_api_key is not None,
         "fred_series_id": saved_settings.fred_series_id or settings.fred_series_id,
+        "has_newsapi_key": saved_settings.has_newsapi_key or settings.newsapi_key is not None,
+        "newsapi_query": saved_settings.newsapi_query or settings.newsapi_query,
+        "gdelt_query": saved_settings.gdelt_query or settings.gdelt_query,
+        "has_alphavantage_api_key": saved_settings.has_alphavantage_api_key
+        or settings.alphavantage_api_key is not None,
+        "alphavantage_topics": saved_settings.alphavantage_topics
+        or settings.alphavantage_topics,
+        "has_finnhub_api_key": saved_settings.has_finnhub_api_key
+        or settings.finnhub_api_key is not None,
+        "finnhub_category": saved_settings.finnhub_category or settings.finnhub_category,
+        "has_reddit_access_token": saved_settings.has_reddit_access_token
+        or settings.reddit_access_token is not None,
+        "reddit_user_agent": saved_settings.reddit_user_agent
+        or settings.reddit_user_agent
+        or "",
+        "reddit_query": saved_settings.reddit_query or settings.reddit_query,
+        "reddit_subreddit": saved_settings.reddit_subreddit
+        or settings.reddit_subreddit
+        or "",
+        "has_youtube_api_key": saved_settings.has_youtube_api_key
+        or settings.youtube_api_key is not None,
+        "youtube_query": saved_settings.youtube_query or settings.youtube_query,
+        "has_x_bearer_token": saved_settings.has_x_bearer_token
+        or settings.x_bearer_token is not None,
+        "x_query": saved_settings.x_query or settings.x_query,
+        "has_stackexchange_key": saved_settings.has_stackexchange_key
+        or settings.stackexchange_key is not None,
+        "stackexchange_query": saved_settings.stackexchange_query or settings.stackexchange_query,
+        "stackexchange_site": saved_settings.stackexchange_site or settings.stackexchange_site,
+        "has_quantconnect_user_id": saved_settings.has_quantconnect_user_id
+        or settings.quantconnect_user_id is not None,
+        "has_quantconnect_token": saved_settings.has_quantconnect_token
+        or settings.quantconnect_token is not None,
+        "quantconnect_organization_id": saved_settings.quantconnect_organization_id
+        or settings.quantconnect_organization_id
+        or "",
         "source_options": _source_options(),
         "run_result": _collect_once_result_view(run_result),
         "run_error": run_error,
@@ -321,8 +386,7 @@ def _apply_runtime_source_settings(
     settings: Settings,
     saved: SavedSourceSettings,
     *,
-    clear_github_token: bool,
-    clear_fred_api_key: bool,
+    form: dict[str, str],
 ) -> None:
     values = read_env_values(_env_path(app))
     settings.rss_feed_urls = saved.rss_feed_urls
@@ -331,14 +395,29 @@ def _apply_runtime_source_settings(
     settings.arxiv_search_query = saved.arxiv_search_query
     settings.github_query = saved.github_query
     settings.fred_series_id = saved.fred_series_id
-    if clear_github_token:
-        settings.github_token = None
-    elif values.get("GITHUB_TOKEN"):
-        settings.github_token = SecretStr(values["GITHUB_TOKEN"])
-    if clear_fred_api_key:
-        settings.fred_api_key = None
-    elif values.get("FRED_API_KEY"):
-        settings.fred_api_key = SecretStr(values["FRED_API_KEY"])
+    settings.newsapi_query = saved.newsapi_query
+    settings.gdelt_query = saved.gdelt_query
+    settings.alphavantage_topics = saved.alphavantage_topics
+    settings.finnhub_category = saved.finnhub_category
+    settings.reddit_user_agent = saved.reddit_user_agent or None
+    settings.reddit_query = saved.reddit_query
+    settings.reddit_subreddit = saved.reddit_subreddit or None
+    settings.youtube_query = saved.youtube_query
+    settings.x_query = saved.x_query
+    settings.stackexchange_query = saved.stackexchange_query
+    settings.stackexchange_site = saved.stackexchange_site
+    settings.quantconnect_organization_id = saved.quantconnect_organization_id or None
+    _apply_secret_setting(settings, "github_token", values, "GITHUB_TOKEN", form)
+    _apply_secret_setting(settings, "fred_api_key", values, "FRED_API_KEY", form)
+    _apply_secret_setting(settings, "newsapi_key", values, "NEWSAPI_KEY", form)
+    _apply_secret_setting(settings, "alphavantage_api_key", values, "ALPHAVANTAGE_API_KEY", form)
+    _apply_secret_setting(settings, "finnhub_api_key", values, "FINNHUB_API_KEY", form)
+    _apply_secret_setting(settings, "reddit_access_token", values, "REDDIT_ACCESS_TOKEN", form)
+    _apply_secret_setting(settings, "youtube_api_key", values, "YOUTUBE_API_KEY", form)
+    _apply_secret_setting(settings, "x_bearer_token", values, "X_BEARER_TOKEN", form)
+    _apply_secret_setting(settings, "stackexchange_key", values, "STACKEXCHANGE_KEY", form)
+    _apply_secret_setting(settings, "quantconnect_user_id", values, "QUANTCONNECT_USER_ID", form)
+    _apply_secret_setting(settings, "quantconnect_token", values, "QUANTCONNECT_TOKEN", form)
 
 
 def _env_path(app: FastAPI) -> Path:
@@ -365,6 +444,15 @@ def _source_options() -> list[dict[str, str]]:
         "arxiv": "arXiv",
         "github": "GitHub",
         "fred": "FRED",
+        "newsapi": "NewsAPI",
+        "gdelt": "GDELT",
+        "alphavantage": "Alpha Vantage",
+        "finnhub": "Finnhub",
+        "reddit": "Reddit",
+        "youtube": "YouTube",
+        "x_api": "X API",
+        "stackexchange": "Quant StackExchange",
+        "quantconnect": "QuantConnect",
     }
     return [
         {
@@ -374,6 +462,20 @@ def _source_options() -> list[dict[str, str]]:
         }
         for source_name in SUPPORTED_SOURCES
     ]
+
+
+def _apply_secret_setting(
+    settings: Settings,
+    attribute_name: str,
+    values: dict[str, str],
+    env_key: str,
+    form: dict[str, str],
+) -> None:
+    clear_key = f"clear_{env_key.lower()}"
+    if form.get(clear_key) == "on":
+        setattr(settings, attribute_name, None)
+    elif values.get(env_key):
+        setattr(settings, attribute_name, SecretStr(values[env_key]))
 
 
 def _collect_once_result_view(result: CollectOnceResult | None) -> dict[str, Any] | None:

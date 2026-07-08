@@ -42,14 +42,14 @@ This document tracks planned source adapters and their legal/technical requireme
 - API-key or user-agent requirements are enforced before HTTP requests for key-gated sources.
 - All tests use fixture responses and `respx`; no live API calls are made in tests.
 - Stored records are source IDs, canonical links, publication/fetch timestamps, compact excerpts or summaries, and safe metadata only.
-- RSS, SEC EDGAR, arXiv, GitHub, and FRED can be run through `python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred`.
+- RSS, SEC EDGAR, arXiv, GitHub, FRED, NewsAPI, GDELT, Alpha Vantage, Finnhub, Reddit, YouTube, X API, Quant StackExchange, and QuantConnect can be run through `python -m app.jobs.collect_once --sources ...` or the local `/settings/sources` page.
 - Manual collection is not scheduled and is not wired to dashboard actions.
 
 ## Phase 3 Social, Community, Video, And Premium Behavior
 
 - Implemented adapters: Reddit, YouTube, X API, Stack Exchange, QuantConnect, and premium metadata intake.
 - Reddit, YouTube, X, and QuantConnect fail before HTTP unless required local credentials are configured.
-- Stack Exchange is API-key optional but disabled by default to avoid accidental community-source calls.
+- Stack Exchange is API-key optional and is enabled only when explicitly selected for a manual run.
 - Premium metadata intake is disabled by default and requires explicit authorization for each configured run.
 - Premium metadata rejects full-text fields such as article bodies, transcripts, HTML, Markdown, or exported content.
 - Tests use fixtures and `respx`; no live social, video, community, premium, or platform API calls are made in tests.

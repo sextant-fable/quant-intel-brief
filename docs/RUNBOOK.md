@@ -101,10 +101,10 @@ Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-co
 
 ## Manual Collect Once
 
-Run selected public/official collectors manually:
+Run selected collectors manually:
 
 ```bash
-python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
+python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred,newsapi,gdelt,alphavantage,finnhub,reddit,youtube,x_api,stackexchange,quantconnect
 ```
 
 The command writes metadata-only records and source statuses into local SQLite. It does not run the scheduler, call an LLM, generate summaries, or send email.
@@ -128,6 +128,27 @@ GITHUB_QUERY=quant finance language:Python
 GITHUB_TOKEN=
 FRED_API_KEY=
 FRED_SERIES_ID=FEDFUNDS
+NEWSAPI_KEY=
+NEWSAPI_QUERY=quant finance OR ETF OR options
+GDELT_QUERY=quant finance
+ALPHAVANTAGE_API_KEY=
+ALPHAVANTAGE_TOPICS=financial_markets,economy_macro
+FINNHUB_API_KEY=
+FINNHUB_CATEGORY=general
+REDDIT_ACCESS_TOKEN=
+REDDIT_USER_AGENT=
+REDDIT_QUERY=quant finance OR algotrading
+REDDIT_SUBREDDIT=
+YOUTUBE_API_KEY=
+YOUTUBE_QUERY=quant finance
+X_BEARER_TOKEN=
+X_QUERY=quant finance lang:en
+STACKEXCHANGE_KEY=
+STACKEXCHANGE_QUERY=quant finance
+STACKEXCHANGE_SITE=quant
+QUANTCONNECT_USER_ID=
+QUANTCONNECT_TOKEN=
+QUANTCONNECT_ORGANIZATION_ID=
 ```
 
 Collector command tests use injected fake collectors and mocked adapter tests only:
