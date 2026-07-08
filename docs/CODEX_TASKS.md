@@ -40,6 +40,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Generalize LLM configuration for OpenAI-compatible providers.
 - [x] Add local dashboard page for saving LLM API settings.
 - [x] Add manual collect-once command for RSS, SEC EDGAR, arXiv, GitHub, and FRED.
+- [x] Add local dashboard page for source settings and manual collect-once runs.
 
 ## Phase 0 Done Criteria
 

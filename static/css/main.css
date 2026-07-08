@@ -182,6 +182,11 @@ h2 {
   color: #6f4e00;
 }
 
+.notice-error {
+  background: #fff1f0;
+  color: var(--fail);
+}
+
 .filters,
 .settings-form {
   align-items: end;
@@ -211,7 +216,8 @@ h2 {
 
 .filters input,
 .settings-form input,
-.settings-form select {
+.settings-form select,
+.settings-form textarea {
   border: 1px solid #c7ced9;
   border-radius: 6px;
   color: var(--text);
@@ -219,6 +225,12 @@ h2 {
   min-height: 36px;
   padding: 7px 9px;
   width: 100%;
+}
+
+.settings-form textarea {
+  line-height: 1.45;
+  min-height: 82px;
+  resize: vertical;
 }
 
 .checkbox-row {
@@ -236,6 +248,58 @@ h2 {
 .settings-help {
   max-width: 720px;
   padding-top: 20px;
+}
+
+.source-settings-form {
+  max-width: 860px;
+}
+
+.source-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.source-picker {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0;
+  padding: 12px;
+}
+
+.source-picker legend {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.run-summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
+  max-width: 860px;
+}
+
+.run-summary div {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.settings-table {
+  margin-bottom: 16px;
+  max-width: 860px;
 }
 
 .settings-help p {
@@ -348,7 +412,9 @@ th {
 
   .metrics,
   .grid-two,
-  .filters {
+  .filters,
+  .source-grid,
+  .run-summary {
     grid-template-columns: 1fr;
   }
 }

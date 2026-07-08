@@ -109,6 +109,14 @@ python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
 
 The command writes metadata-only records and source statuses into local SQLite. It does not run the scheduler, call an LLM, generate summaries, or send email.
 
+The same manual run can be started from the local dashboard:
+
+```text
+http://127.0.0.1:8001/settings/sources
+```
+
+Use `Save Source Settings` to update local `.env` values. Use `Run Collect Once` to run only the checked sources. The page hides saved GitHub and FRED secrets after saving.
+
 Useful local `.env` settings:
 
 ```bash

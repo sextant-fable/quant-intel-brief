@@ -54,6 +54,8 @@ Available local routes:
 - `GET /reports`
 - `GET /reports/{report_id}`
 - `GET /sources`
+- `GET /settings/sources`
+- `POST /settings/sources`
 
 Collectors do not run automatically from the app shell. Dashboard pages read only local database data.
 
@@ -79,7 +81,13 @@ Run selected live collectors manually with:
 python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
 ```
 
-This command is user-triggered only. It writes metadata and source status rows into local SQLite, but it does not run the scheduler, call an LLM, generate summaries, or send email. Configure source targets and credentials in `.env` first:
+This command is user-triggered only. It writes metadata and source status rows into local SQLite, but it does not run the scheduler, call an LLM, generate summaries, or send email. You can also configure and run the same manual collection from:
+
+```text
+http://127.0.0.1:8001/settings/sources
+```
+
+Configure source targets and credentials in `.env` or from the local source settings page:
 
 ```bash
 RSS_FEED_URLS=

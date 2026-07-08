@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Source Settings - {{ settings.dashboard_title }}{% endblock %}
+{% block body %}
+<main class="shell" data-page="source-settings">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Local collection</p>
+      <h1>Source Settings</h1>
+    </div>
+    <p class="timestamp">Manual collect once</p>
+  </section>
+
+  {% if view.saved %}
+    <p class="notice">Source settings saved locally. Secret fields stay in your local .env file and are not shown here.</p>
+  {% endif %}
+
+  {% if view.run_error %}
+    <p class="notice notice-error">{{ view.run_error }}</p>
+  {% endif %}
+
+  {% if view.run_result %}
+    <section class="run-summary" aria-label="Collect once result">
+      <div>
+        <span class="metric-value">{{ view.run_result.collector_count }}</span>
+        <span class="metric-label">Collector runs</span>
+      </div>
+      <div>
+        <span class="metric-value">{{ view.run_result.total_items_seen }}</span>
+        <span class="metric-label">New items</span>
+      </div>
+      <div>
+        <span class="metric-value">{{ view.run_result.source_failure_count }}</span>
+        <span class="metric-label">Failures</span>
+      </div>
+    </section>
+
+    <div class="table-wrap settings-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Status</th>
+            <th>New Items</th>
+            <th>Skipped</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for summary in view.run_result.summaries %}
+            <tr>
+              <td>{{ summary.source_name }}</td>
+              <td>
+                <span class="status {% if summary.is_failure %}status-failed{% else %}status-ok{% endif %}">
+                  {{ summary.status }}
+                </span>
+              </td>
+              <td>{{ summary.new_items }}</td>
+              <td>{{ summary.skipped_duplicates }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <form class="settings-form source-settings-form" action="/settings/sources" method="post">
+    <fieldset class="source-picker">
+      <legend>Run Sources</legend>
+      {% for option in view.source_options %}
+        <label class="checkbox-row">
+          <input name="{{ option.field }}" type="checkbox" checked>
+          {{ option.label }}
+        </label>
+      {% endfor %}
+    </fieldset>
+
+    <label>
+      RSS Feed URLs
+      <textarea name="rss_feed_urls" rows="3" placeholder="https://example.com/feed.xml">{{ view.rss_feed_urls }}</textarea>
+    </label>
+
+    <div class="source-grid">
+      <label>
+        SEC User Agent
+        <input name="sec_user_agent" value="{{ view.sec_user_agent }}" placeholder="quant-intel-brief email@example.com">
+      </label>
+
+      <label>
+        SEC CIK
+        <input name="sec_cik" value="{{ view.sec_cik }}">
+      </label>
+
+      <label>
+        arXiv Query
+        <input name="arxiv_search_query" value="{{ view.arxiv_search_query }}">
+      </label>
+
+      <label>
+        GitHub Query
+        <input name="github_query" value="{{ view.github_query }}">
+      </label>
+
+      <label>
+        FRED Series
+        <input name="fred_series_id" value="{{ view.fred_series_id }}">
+      </label>
+    </div>
+
+    <label>
+      GitHub Token
+      <input
+        name="github_token"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_github_token %}Leave blank to keep saved token{% else %}Optional{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_github_token" type="checkbox">
+      Clear saved GitHub token
+    </label>
+
+    <label>
+      FRED API Key
+      <input
+        name="fred_api_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_fred_api_key %}Leave blank to keep saved key{% else %}Required for FRED{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_fred_api_key" type="checkbox">
+      Clear saved FRED API key
+    </label>
+
+    <div class="settings-actions">
+      <button type="submit" name="action" value="save">Save Source Settings</button>
+      <button type="submit" name="action" value="run">Run Collect Once</button>
+    </div>
+  </form>
+</main>
+{% endblock %}
