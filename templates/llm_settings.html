@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}AI Settings - {{ settings.dashboard_title }}{% endblock %}
+{% block body %}
+<main class="shell" data-page="llm-settings">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Local configuration</p>
+      <h1>AI Settings</h1>
+    </div>
+    <p class="timestamp">{% if view.has_api_key %}API key saved{% else %}No API key saved{% endif %}</p>
+  </section>
+
+  {% if view.saved %}
+    <p class="notice">AI settings saved locally. The API key is stored in your local .env file and is not shown here.</p>
+  {% endif %}
+
+  <form class="settings-form" action="/settings/llm" method="post" data-llm-settings>
+    <label>
+      Provider
+      <select name="provider" data-provider-select>
+        {% for preset in view.presets %}
+          <option
+            value="{{ preset.provider }}"
+            data-base-url="{{ preset.base_url }}"
+            data-model="{{ preset.model }}"
+            {% if preset.provider == view.provider %}selected{% endif %}
+          >
+            {{ preset.label }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      API Key
+      <input
+        name="api_key"
+        type="password"
+        autocomplete="off"
+        placeholder="{% if view.has_api_key %}Leave blank to keep saved key{% else %}Paste API key here{% endif %}"
+      >
+    </label>
+
+    <label class="checkbox-row">
+      <input name="clear_api_key" type="checkbox">
+      Clear saved API key
+    </label>
+
+    <label>
+      Base URL
+      <input name="base_url" value="{{ view.base_url or "" }}" data-base-url-input>
+    </label>
+
+    <label>
+      Model
+      <input name="model" value="{{ view.model or "" }}" data-model-input>
+    </label>
+
+    <button type="submit">Save AI Settings</button>
+  </form>
+
+  <section class="settings-help">
+    <h2>How this works</h2>
+    <p>These settings stay on this machine. The dashboard saves them to your local .env file and never displays the API key after saving.</p>
+    <p>Use DeepSeek, GLM/Z.AI, Kimi/Moonshot, or any OpenAI-compatible API by changing the provider, base URL, model, and key.</p>
+  </section>
+</main>
+{% endblock %}

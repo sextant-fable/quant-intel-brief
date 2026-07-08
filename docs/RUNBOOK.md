@@ -91,6 +91,14 @@ pytest tests/test_llm_summarization.py
 
 Tests must use fake clients and make no real LLM calls. Local future runs should use `LLM_PROVIDER`, `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL`; legacy `DEEPSEEK_*` aliases still work. Real API keys must stay in `.env` and never be committed.
 
+Local dashboard configuration is available at:
+
+```text
+http://127.0.0.1:8001/settings/llm
+```
+
+Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-compatible provider. The page writes to the local `.env` file, leaves saved API keys hidden, and does not test-call the provider.
+
 ## Phase 8 Report And Email Checks
 
 Daily HTML report rendering and email preview/dry-run behavior are covered by:

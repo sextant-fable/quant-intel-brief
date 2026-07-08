@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import SecretStr
 from sqlmodel import Session, select
 
 from app.core.config import Settings
+from app.core.llm_settings import LLM_PROVIDER_PRESETS, load_llm_settings, save_llm_settings
 from app.core.timezones import utc_now
 from app.db.models import ContentItem, Report, ReportSection, SourceStatus
 from app.web.filters import dashboard_filters_from_query, filter_content_items
@@ -60,6 +63,44 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
     @app.get("/settings/public", tags=["system"])
     def public_settings() -> dict[str, Any]:
         return settings.public_summary()
+
+    @app.get("/settings/llm", response_class=HTMLResponse, tags=["dashboard"])
+    def llm_settings(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request,
+            "llm_settings.html",
+            {
+                "settings": settings,
+                "view": _llm_settings_view(app, settings),
+            },
+        )
+
+    @app.post("/settings/llm", response_class=HTMLResponse, tags=["dashboard"])
+    async def save_llm_settings_route(request: Request) -> HTMLResponse:
+        form = _parse_form(await request.body())
+        provider = form.get("provider", "custom")
+        saved = save_llm_settings(
+            _env_path(app),
+            provider=provider,
+            base_url=form.get("base_url", ""),
+            model=form.get("model", ""),
+            api_key=form.get("api_key"),
+            clear_api_key=form.get("clear_api_key") == "on",
+        )
+        _apply_runtime_llm_settings(
+            settings,
+            saved,
+            api_key=form.get("api_key", ""),
+            clear_api_key=form.get("clear_api_key") == "on",
+        )
+        return templates.TemplateResponse(
+            request,
+            "llm_settings.html",
+            {
+                "settings": settings,
+                "view": _llm_settings_view(app, settings, saved=True),
+            },
+        )
 
     @app.get("/dashboard/today", response_class=HTMLResponse, tags=["dashboard"])
     def dashboard_today(request: Request) -> HTMLResponse:
@@ -139,3 +180,45 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
 def _source_statuses(app: FastAPI) -> list[SourceStatus]:
     with Session(app.state.engine) as session:
         return list(session.exec(select(SourceStatus).order_by(SourceStatus.source_name)).all())
+
+
+def _llm_settings_view(
+    app: FastAPI,
+    settings: Settings,
+    *,
+    saved: bool = False,
+) -> dict[str, Any]:
+    saved_settings = load_llm_settings(_env_path(app))
+    return {
+        "saved": saved,
+        "provider": saved_settings.provider or settings.llm_provider,
+        "base_url": saved_settings.base_url or settings.llm_base_url,
+        "model": saved_settings.model or settings.llm_model,
+        "has_api_key": saved_settings.has_api_key or settings.llm_api_key is not None,
+        "presets": [preset for preset in LLM_PROVIDER_PRESETS.values()],
+    }
+
+
+def _apply_runtime_llm_settings(
+    settings: Settings,
+    saved: Any,
+    *,
+    api_key: str,
+    clear_api_key: bool,
+) -> None:
+    settings.llm_provider = saved.provider
+    settings.llm_base_url = saved.base_url
+    settings.llm_model = saved.model
+    if clear_api_key:
+        settings.llm_api_key = None
+    elif api_key.strip():
+        settings.llm_api_key = SecretStr(api_key.strip())
+
+
+def _env_path(app: FastAPI) -> Path:
+    return getattr(app.state, "env_file_path", Path(".env"))
+
+
+def _parse_form(body: bytes) -> dict[str, str]:
+    parsed = parse_qs(body.decode("utf-8"), keep_blank_values=True)
+    return {key: values[-1] if values else "" for key, values in parsed.items()}

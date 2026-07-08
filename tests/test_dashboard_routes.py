@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -14,12 +15,14 @@ from app.db.session import create_db_engine
 from app.main import create_app
 
 
-def _client_with_session() -> tuple[TestClient, Session]:
+def _client_with_session(env_path: Path | None = None) -> tuple[TestClient, Session]:
     engine = create_db_engine("sqlite://")
     app = create_app(
         settings=Settings(database_url="sqlite://", dashboard_title="Dashboard Test"),
         engine=engine,
     )
+    if env_path is not None:
+        app.state.env_file_path = env_path
     return TestClient(app), Session(engine)
 
 
@@ -158,3 +161,54 @@ def test_static_assets_are_served_locally() -> None:
 
     assert response.status_code == 200
     assert "color-scheme" in response.text
+
+
+def test_llm_settings_page_saves_local_env_without_echoing_key(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    client, session = _client_with_session(env_path=env_path)
+    session.close()
+
+    get_response = client.get("/settings/llm")
+    post_response = client.post(
+        "/settings/llm",
+        data={
+            "provider": "glm",
+            "api_key": "test-secret-key",
+            "base_url": "https://api.z.ai/api/paas/v4/",
+            "model": "glm-5.2",
+        },
+    )
+    env_text = env_path.read_text(encoding="utf-8")
+
+    assert get_response.status_code == 200
+    assert "AI Settings" in get_response.text
+    assert post_response.status_code == 200
+    assert "AI settings saved locally" in post_response.text
+    assert "test-secret-key" not in post_response.text
+    assert "LLM_PROVIDER=glm" in env_text
+    assert "LLM_API_KEY=test-secret-key" in env_text
+    assert "LLM_BASE_URL=https://api.z.ai/api/paas/v4/" in env_text
+    assert "LLM_MODEL=glm-5.2" in env_text
+
+
+def test_llm_settings_blank_key_preserves_existing_key(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text("LLM_API_KEY=existing-key\n", encoding="utf-8")
+    client, session = _client_with_session(env_path=env_path)
+    session.close()
+
+    response = client.post(
+        "/settings/llm",
+        data={
+            "provider": "kimi",
+            "api_key": "",
+            "base_url": "https://api.moonshot.ai/v1",
+            "model": "kimi-k2.6",
+        },
+    )
+    env_text = env_path.read_text(encoding="utf-8")
+
+    assert response.status_code == 200
+    assert "existing-key" not in response.text
+    assert "LLM_API_KEY=existing-key" in env_text
+    assert "LLM_PROVIDER=kimi" in env_text

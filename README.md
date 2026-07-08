@@ -84,6 +84,14 @@ LLM_MODEL=deepseek-chat
 
 DeepSeek, GLM, GPT-compatible gateways, and other OpenAI-compatible APIs can use the same fields by changing provider, base URL, model, and key. `DEEPSEEK_*` settings remain supported as legacy aliases.
 
+You can also configure the same values from the local dashboard:
+
+```text
+http://127.0.0.1:8001/settings/llm
+```
+
+The settings page saves the API key into the local `.env` file and does not display it after saving.
+
 ## Repository Layout
 
 - `.agents/skills/`: local Codex skill instructions for source adapters, report checks, and dashboard QA.

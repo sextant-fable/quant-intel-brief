@@ -38,6 +38,7 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement disabled-by-default scheduler wiring.
 - [x] Implement local demo seed data command.
 - [x] Generalize LLM configuration for OpenAI-compatible providers.
+- [x] Add local dashboard page for saving LLM API settings.
 
 ## Phase 0 Done Criteria
 

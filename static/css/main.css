@@ -182,7 +182,8 @@ h2 {
   color: #6f4e00;
 }
 
-.filters {
+.filters,
+.settings-form {
   align-items: end;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -194,14 +195,23 @@ h2 {
   padding: 14px;
 }
 
-.filters label {
+.settings-form {
+  align-items: stretch;
+  grid-template-columns: 1fr;
+  max-width: 720px;
+}
+
+.filters label,
+.settings-form label {
   color: var(--muted);
   display: grid;
   font-size: 12px;
   gap: 5px;
 }
 
-.filters input {
+.filters input,
+.settings-form input,
+.settings-form select {
   border: 1px solid #c7ced9;
   border-radius: 6px;
   color: var(--text);
@@ -209,6 +219,28 @@ h2 {
   min-height: 36px;
   padding: 7px 9px;
   width: 100%;
+}
+
+.checkbox-row {
+  align-items: center;
+  display: flex !important;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.checkbox-row input {
+  min-height: auto;
+  width: auto;
+}
+
+.settings-help {
+  max-width: 720px;
+  padding-top: 20px;
+}
+
+.settings-help p {
+  color: #3f4754;
+  line-height: 1.55;
 }
 
 button,
