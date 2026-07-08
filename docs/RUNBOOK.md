@@ -83,13 +83,13 @@ Ranking explanations are informational importance notes only. They must not cont
 
 ## Phase 7 LLM Summary Checks
 
-DeepSeek-compatible structured summarization is covered by mocked tests:
+OpenAI-compatible structured summarization is covered by mocked tests:
 
 ```bash
 pytest tests/test_llm_summarization.py
 ```
 
-Tests must use fake clients and make no real LLM calls. Local future runs may use `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`, but those values must stay in `.env` and never be committed.
+Tests must use fake clients and make no real LLM calls. Local future runs should use `LLM_PROVIDER`, `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL`; legacy `DEEPSEEK_*` aliases still work. Real API keys must stay in `.env` and never be committed.
 
 ## Phase 8 Report And Email Checks
 
@@ -126,6 +126,22 @@ python -m app.jobs.run_daily
 ```
 
 The default manual command creates a local draft report without live collectors, LLM calls, or email sending. Scheduler wiring is disabled unless `ENABLE_SCHEDULER=true`; use `DAILY_RUN_TIME=HH:MM` and `RETENTION_DAYS=30` for local operations tuning.
+
+## Demo Seed
+
+Populate the local dashboard with deterministic demo data:
+
+```bash
+python -m app.jobs.seed_demo
+```
+
+The seed command writes simulated Fed, ETF/options, SEC, arXiv, GitHub, and Reddit metadata plus a demo report. It makes no external API calls and stores metadata-only demo excerpts.
+
+Demo seeding is covered by:
+
+```bash
+pytest tests/test_seed_demo.py
+```
 
 ## Incident Notes
 

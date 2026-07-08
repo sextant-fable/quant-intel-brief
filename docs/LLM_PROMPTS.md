@@ -23,7 +23,9 @@ Prompt templates and structured output requirements live in `app/llm/prompts.py`
 
 ## Phase 7 Behavior
 
-- `DeepSeekClient` uses `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`.
+- `OpenAICompatibleClient` uses `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL`.
+- `LLM_PROVIDER` records the configured provider label, such as `deepseek`, `glm`, or `openai`.
+- `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL` remain legacy fallback aliases.
 - Tests use fake clients and do not make real LLM calls.
 - `EventSummary` validates structured fields before downstream use.
 - Summaries must cite only provided source IDs and URLs.

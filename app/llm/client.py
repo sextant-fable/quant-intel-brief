@@ -1,4 +1,4 @@
-"""DeepSeek-compatible OpenAI client wrapper."""
+"""OpenAI-compatible JSON completion client wrapper."""
 
 from __future__ import annotations
 
@@ -28,32 +28,39 @@ class JsonCompletionClient(Protocol):
 
 
 @dataclass(frozen=True, slots=True)
-class DeepSeekClientConfig:
-    """DeepSeek-compatible client settings."""
+class OpenAICompatibleClientConfig:
+    """OpenAI-compatible chat completion settings."""
 
     api_key: SecretStr | None
+    provider: str = "openai-compatible"
     base_url: str = "https://api.deepseek.com"
     model: str = "deepseek-chat"
 
     @classmethod
-    def from_settings(cls, settings: Settings) -> DeepSeekClientConfig:
+    def from_settings(cls, settings: Settings) -> OpenAICompatibleClientConfig:
+        api_key = settings.llm_api_key or settings.deepseek_api_key
+        base_url = settings.llm_base_url or settings.deepseek_base_url
+        model = settings.llm_model or settings.deepseek_model
         return cls(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
-            model=settings.deepseek_model,
+            api_key=api_key,
+            provider=settings.llm_provider,
+            base_url=base_url,
+            model=model,
         )
 
 
-class DeepSeekClient:
-    """Small OpenAI-compatible JSON completion client for DeepSeek."""
+class OpenAICompatibleClient:
+    """Small JSON completion client for OpenAI-compatible providers."""
 
     def __init__(
         self,
-        config: DeepSeekClientConfig,
+        config: OpenAICompatibleClientConfig,
         openai_client: Any | None = None,
     ) -> None:
         if openai_client is None and config.api_key is None:
-            raise MissingLlmApiKeyError("DEEPSEEK_API_KEY is required for live LLM calls.")
+            raise MissingLlmApiKeyError(
+                "LLM_API_KEY or a provider-specific API key is required for live LLM calls."
+            )
         self.config = config
         self._client: Any = openai_client or OpenAI(
             api_key=config.api_key.get_secret_value() if config.api_key else None,
@@ -84,10 +91,15 @@ class DeepSeekClient:
             raise LlmClientError(f"LLM request failed: {exc}") from exc
 
 
+DeepSeekClientConfig = OpenAICompatibleClientConfig
+DeepSeekClient = OpenAICompatibleClient
+
 __all__ = [
     "DeepSeekClient",
     "DeepSeekClientConfig",
     "JsonCompletionClient",
     "LlmClientError",
     "MissingLlmApiKeyError",
+    "OpenAICompatibleClient",
+    "OpenAICompatibleClientConfig",
 ]

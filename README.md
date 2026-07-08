@@ -65,6 +65,25 @@ python -m app.jobs.run_daily
 
 The manual job creates a local draft report by default. It does not run live collectors, call an LLM, or send email unless future code passes explicit configured inputs.
 
+Seed local demo data for visual review with:
+
+```bash
+python -m app.jobs.seed_demo
+```
+
+This writes simulated Fed, ETF/options, SEC, arXiv, GitHub, and Reddit metadata into local SQLite storage so the dashboard looks populated without external API calls.
+
+For LLM providers, use OpenAI-compatible settings in `.env`:
+
+```bash
+LLM_PROVIDER=deepseek
+LLM_API_KEY=
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
+```
+
+DeepSeek, GLM, GPT-compatible gateways, and other OpenAI-compatible APIs can use the same fields by changing provider, base URL, model, and key. `DEEPSEEK_*` settings remain supported as legacy aliases.
+
 ## Repository Layout
 
 - `.agents/skills/`: local Codex skill instructions for source adapters, report checks, and dashboard QA.

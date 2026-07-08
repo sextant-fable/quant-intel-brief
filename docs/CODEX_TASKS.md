@@ -36,6 +36,8 @@ Use this document to break future work into safe implementation tasks.
 - [x] Implement local daily job orchestration.
 - [x] Implement 30-day retention cleanup.
 - [x] Implement disabled-by-default scheduler wiring.
+- [x] Implement local demo seed data command.
+- [x] Generalize LLM configuration for OpenAI-compatible providers.
 
 ## Phase 0 Done Criteria
 

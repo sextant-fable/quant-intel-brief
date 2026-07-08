@@ -45,6 +45,7 @@ def run_daily(
     collector_results: Iterable[CollectorRunResult] = (),
     summary_results: Iterable[SummaryResult] = (),
     report_date: date | None = None,
+    report_title: str = "Quant Intel Brief",
     reports_dir: Path | None = None,
     email_sender: EmailSender | None = None,
     report_recipients: Iterable[str] | str | None = None,
@@ -57,6 +58,7 @@ def run_daily(
     daily_report = generate_daily_report(
         summary_results,
         report_date=report_date or utc_now().date(),
+        title=report_title,
     )
     source_failure_count = _source_failure_count(persistence_summaries)
     daily_report.source_coverage_note = _coverage_note(

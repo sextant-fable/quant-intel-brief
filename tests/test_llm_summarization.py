@@ -1,4 +1,4 @@
-"""Phase 7 DeepSeek-compatible summarization tests."""
+"""Phase 7 OpenAI-compatible summarization tests."""
 
 from __future__ import annotations
 
@@ -7,14 +7,17 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
+from app.core.config import Settings
 from app.db.models import Cluster, ContentItem, RankedItem
 from app.llm.client import (
     DeepSeekClient,
     DeepSeekClientConfig,
     LlmClientError,
     MissingLlmApiKeyError,
+    OpenAICompatibleClient,
+    OpenAICompatibleClientConfig,
 )
 from app.llm.prompts import build_event_summary_messages
 from app.llm.schemas import EventEvidence, EventSummary
@@ -170,7 +173,7 @@ def test_anti_hallucination_rejects_unknown_sources_and_advisory_language() -> N
     assert "advisory" in (advice_result.error_message or "")
 
 
-def test_deepseek_client_decodes_mocked_openai_compatible_json() -> None:
+def test_openai_compatible_client_decodes_mocked_json() -> None:
     payload = _summary_payload()
 
     class FakeCompletions:
@@ -182,14 +185,57 @@ def test_deepseek_client_decodes_mocked_openai_compatible_json() -> None:
             )
 
     fake_openai = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
-    client = DeepSeekClient(
-        DeepSeekClientConfig(api_key=None, base_url="https://example.test", model="deepseek-chat"),
+    client = OpenAICompatibleClient(
+        OpenAICompatibleClientConfig(
+            api_key=None,
+            provider="glm",
+            base_url="https://example.test",
+            model="glm-demo",
+        ),
         openai_client=fake_openai,
     )
 
     assert client.complete_json([{"role": "user", "content": "{}"}]) == payload
 
 
-def test_deepseek_client_requires_api_key_for_live_client() -> None:
+def test_openai_compatible_client_uses_generic_settings_first() -> None:
+    settings = Settings(
+        llm_provider="openai",
+        llm_api_key=SecretStr("generic-key"),
+        llm_base_url="https://api.openai.test/v1",
+        llm_model="gpt-demo",
+        deepseek_api_key=SecretStr("deepseek-key"),
+        deepseek_base_url="https://deepseek.test",
+        deepseek_model="deepseek-demo",
+    )
+
+    config = OpenAICompatibleClientConfig.from_settings(settings)
+
+    assert config.provider == "openai"
+    assert config.api_key is not None
+    assert config.api_key.get_secret_value() == "generic-key"
+    assert config.base_url == "https://api.openai.test/v1"
+    assert config.model == "gpt-demo"
+
+
+def test_deepseek_aliases_remain_supported() -> None:
+    settings = Settings(
+        llm_api_key=None,
+        llm_base_url=None,
+        llm_model=None,
+        deepseek_api_key=SecretStr("deepseek-key"),
+        deepseek_base_url="https://deepseek.test",
+        deepseek_model="deepseek-demo",
+    )
+
+    config = DeepSeekClientConfig.from_settings(settings)
+
+    assert config.api_key is not None
+    assert config.api_key.get_secret_value() == "deepseek-key"
+    assert config.base_url == "https://deepseek.test"
+    assert config.model == "deepseek-demo"
+
+
+def test_openai_compatible_client_requires_api_key_for_live_client() -> None:
     with pytest.raises(MissingLlmApiKeyError):
         DeepSeekClient(DeepSeekClientConfig(api_key=None))

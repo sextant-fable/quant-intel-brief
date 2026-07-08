@@ -27,7 +27,7 @@ Phase 10 local job orchestration, retention cleanup, and optional scheduler boun
 - `app/enrichers/`: ticker, asset, and quant-topic tagging.
 - `app/dedup/`: canonicalization and clustering.
 - `app/ranking/`: prefiltering and scoring.
-- `app/llm/`: DeepSeek-compatible client, schemas, prompts, and summarization.
+- `app/llm/`: OpenAI-compatible client, schemas, prompts, and summarization.
 - `app/reports/`: report assembly and template helpers.
 - `app/email/`: outbound delivery interfaces and providers.
 - `app/web/`: dashboard routes, filters, and view models.

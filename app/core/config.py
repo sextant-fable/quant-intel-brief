@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     dashboard_base_url: str = "http://127.0.0.1:8000"
     dashboard_title: str = "Quant Intel Brief"
 
+    llm_provider: str = "deepseek"
+    llm_api_key: SecretStr | None = None
+    llm_base_url: str | None = "https://api.deepseek.com"
+    llm_model: str | None = "deepseek-chat"
     deepseek_api_key: SecretStr | None = None
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
@@ -81,6 +85,9 @@ class Settings(BaseSettings):
             "database_url": self._redact_database_url(self.database_url),
             "dashboard_base_url": self.dashboard_base_url,
             "dashboard_title": self.dashboard_title,
+            "llm_provider": self.llm_provider,
+            "llm_base_url": self.llm_base_url or self.deepseek_base_url,
+            "llm_model": self.llm_model or self.deepseek_model,
             "enable_scheduler": self.enable_scheduler,
             "daily_run_time": self.daily_run_time,
             "retention_days": self.retention_days,
