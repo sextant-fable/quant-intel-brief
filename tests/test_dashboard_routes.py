@@ -35,6 +35,7 @@ def test_empty_database_dashboard_routes_render() -> None:
 
     assert today.status_code == 200
     assert "No local content items yet." in today.text
+    assert "built-in method" not in today.text
     assert feed.status_code == 200
     assert "No local content items match the current filters." in feed.text
     assert reports.status_code == 200

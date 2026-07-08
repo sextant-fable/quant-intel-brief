@@ -25,9 +25,9 @@ def build_dashboard_view(
     return {
         "generated_at": utc_now().isoformat(),
         "counts": {
-            "items": len(item_views),
-            "reports": len(report_views),
-            "sources": len(status_views),
+            "item_count": len(item_views),
+            "report_count": len(report_views),
+            "source_count": len(status_views),
             "source_failures": sum(1 for status in status_views if status["is_failure"]),
         },
         "recent_items": item_views[:8],
