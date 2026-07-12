@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     finnhub_api_key: SecretStr | None = None
     finnhub_category: str = "general"
     rss_feed_urls: str | None = None
+    finance_news_mcp_url: str | None = None
+    finance_news_mcp_sources: str = "bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha"
+    finance_news_mcp_items_per_source: int = 20
     fred_api_key: SecretStr | None = None
     fred_series_id: str = "FEDFUNDS"
     sec_user_agent: str | None = None

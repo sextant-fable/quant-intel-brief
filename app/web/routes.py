@@ -147,6 +147,12 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
         saved = save_source_settings(
             _env_path(app),
             rss_feed_urls=form.get("rss_feed_urls", ""),
+            finance_news_mcp_url=form.get("finance_news_mcp_url", ""),
+            finance_news_mcp_sources=form.get("finance_news_mcp_sources", ""),
+            finance_news_mcp_items_per_source=form.get(
+                "finance_news_mcp_items_per_source",
+                "20",
+            ),
             sec_user_agent=form.get("sec_user_agent", ""),
             sec_cik=form.get("sec_cik", ""),
             arxiv_search_query=form.get("arxiv_search_query", ""),
@@ -529,6 +535,13 @@ def _source_settings_view(
     return {
         "saved": saved,
         "rss_feed_urls": saved_settings.rss_feed_urls or settings.rss_feed_urls or "",
+        "finance_news_mcp_url": saved_settings.finance_news_mcp_url
+        or settings.finance_news_mcp_url
+        or "",
+        "finance_news_mcp_sources": saved_settings.finance_news_mcp_sources
+        or settings.finance_news_mcp_sources,
+        "finance_news_mcp_items_per_source": saved_settings.finance_news_mcp_items_per_source
+        or settings.finance_news_mcp_items_per_source,
         "sec_user_agent": saved_settings.sec_user_agent or settings.sec_user_agent or "",
         "sec_cik": saved_settings.sec_cik or settings.sec_cik,
         "arxiv_search_query": saved_settings.arxiv_search_query or settings.arxiv_search_query,
@@ -572,7 +585,7 @@ def _source_settings_view(
         "quantconnect_organization_id": saved_settings.quantconnect_organization_id
         or settings.quantconnect_organization_id
         or "",
-        "source_options": _source_options(),
+        "source_options": _source_options(settings),
         "run_result": _collect_once_result_view(run_result),
         "run_error": run_error,
     }
@@ -659,6 +672,7 @@ def _configured_source_names(settings: Settings) -> tuple[str, ...]:
     """Select sources that have the minimum configuration for an explicit refresh."""
     ready = {
         "rss": bool(settings.rss_feed_urls),
+        "finance_news_mcp": bool(settings.finance_news_mcp_url),
         "sec_edgar": bool(settings.sec_user_agent),
         "arxiv": True,
         "github": True,
@@ -688,6 +702,9 @@ def _apply_runtime_source_settings(
 ) -> None:
     values = read_env_values(_env_path(app))
     settings.rss_feed_urls = saved.rss_feed_urls
+    settings.finance_news_mcp_url = saved.finance_news_mcp_url or None
+    settings.finance_news_mcp_sources = saved.finance_news_mcp_sources
+    settings.finance_news_mcp_items_per_source = saved.finance_news_mcp_items_per_source
     settings.sec_user_agent = saved.sec_user_agent or None
     settings.sec_cik = saved.sec_cik
     settings.arxiv_search_query = saved.arxiv_search_query
@@ -739,9 +756,10 @@ def _selected_source_names(form: dict[str, str]) -> tuple[str, ...]:
     )
 
 
-def _source_options() -> list[dict[str, str]]:
+def _source_options(settings: Settings) -> list[dict[str, Any]]:
     labels = {
         "rss": "RSS",
+        "finance_news_mcp": "Finance News MCP",
         "sec_edgar": "SEC EDGAR",
         "arxiv": "arXiv",
         "github": "GitHub",
@@ -756,11 +774,13 @@ def _source_options() -> list[dict[str, str]]:
         "stackexchange": "Quant StackExchange",
         "quantconnect": "QuantConnect",
     }
+    configured_sources = set(_configured_source_names(settings))
     return [
         {
             "name": source_name,
             "field": f"source_{source_name}",
             "label": labels[source_name],
+            "checked": source_name in configured_sources,
         }
         for source_name in SUPPORTED_SOURCES
     ]

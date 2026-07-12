@@ -6,7 +6,7 @@ import argparse
 import asyncio
 import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 from pydantic import SecretStr
@@ -21,6 +21,11 @@ from app.collectors.base import (
     CollectorStatus,
     SourceCollector,
     persist_collector_result,
+)
+from app.collectors.finance_news_mcp import (
+    FINANCE_NEWS_MCP_SOURCES,
+    FinanceNewsMcpCollector,
+    StreamableHttpFinanceNewsMcpClient,
 )
 from app.collectors.finnhub import FinnhubCollector
 from app.collectors.fred import FredCollector
@@ -41,6 +46,7 @@ from app.db.session import create_db_engine, init_db
 CORE_SOURCES = ("rss", "sec_edgar", "arxiv", "github", "fred")
 SUPPORTED_SOURCES = (
     *CORE_SOURCES,
+    "finance_news_mcp",
     "newsapi",
     "gdelt",
     "alphavantage",
@@ -130,6 +136,8 @@ def build_collectors(
     for source_name in selected_sources:
         if source_name == "rss":
             collectors.extend(_rss_collectors(settings, config))
+        elif source_name == "finance_news_mcp":
+            collectors.extend(_finance_news_mcp_collectors(settings, config))
         elif source_name == "sec_edgar":
             collectors.append(
                 SecEdgarCollector(
@@ -329,6 +337,45 @@ def _rss_collectors(settings: Settings, config: CollectorConfig) -> list[Collect
             )
         )
     return collectors
+
+
+def _finance_news_mcp_collectors(
+    settings: Settings,
+    config: CollectorConfig,
+) -> list[CollectorLike]:
+    publisher_sources = _split_list_setting(settings.finance_news_mcp_sources)
+    invalid_sources = [
+        source for source in publisher_sources if source not in FINANCE_NEWS_MCP_SOURCES
+    ]
+    if invalid_sources:
+        return [
+            StaticResultCollector(
+                source_name="finance_news_mcp",
+                source_type="mcp_rss",
+                display_name="Finance News MCP",
+                status=CollectorStatus.FAILED,
+                message=f"Unsupported MCP publisher source(s): {', '.join(invalid_sources)}.",
+            )
+        ]
+
+    active_sources = publisher_sources or FINANCE_NEWS_MCP_SOURCES
+    mcp_config = replace(
+        config,
+        max_items=min(max(1, settings.finance_news_mcp_items_per_source), 100),
+    )
+    shared_client = StreamableHttpFinanceNewsMcpClient(
+        settings.finance_news_mcp_url or "",
+        timeout_seconds=mcp_config.timeout_seconds,
+    )
+    return [
+        FinanceNewsMcpCollector(
+            endpoint_url=settings.finance_news_mcp_url,
+            publisher_source=publisher_source,
+            config=mcp_config,
+            client=shared_client,
+        )
+        for publisher_source in active_sources
+    ]
 
 
 def _split_list_setting(value: str | None) -> tuple[str, ...]:

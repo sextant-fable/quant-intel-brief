@@ -6,7 +6,7 @@ The project is designed to run on a personal machine first, with local SQLite st
 
 ## Current Phase
 
-Phase 10 is implemented, followed by manual collection, configurable OpenAI-compatible LLMs, a premium reading queue, and an English-first bilingual reporting experience. New reports include a ranked Top 10, concise Chinese translations for key conclusions, watch points, source confidence, and five market sections.
+Phase 10 is implemented, followed by manual collection, configurable OpenAI-compatible LLMs, a premium reading queue, publication-time freshness rules, source-balanced Top 10 selection, an independent Finance News MCP adapter, and an English-first bilingual reporting experience.
 
 ## Intended Workflow
 
@@ -84,18 +84,31 @@ Run selected live collectors manually with:
 python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred
 ```
 
-Supported source names are `rss`, `sec_edgar`, `arxiv`, `github`, `fred`, `newsapi`, `gdelt`, `alphavantage`, `finnhub`, `reddit`, `youtube`, `x_api`, `stackexchange`, and `quantconnect`.
+Supported source names are `rss`, `finance_news_mcp`, `sec_edgar`, `arxiv`, `github`, `fred`, `newsapi`, `gdelt`, `alphavantage`, `finnhub`, `reddit`, `youtube`, `x_api`, `stackexchange`, and `quantconnect`.
 
 This command is user-triggered only. It writes metadata and source status rows into local SQLite, but it does not run the scheduler, call an LLM, generate summaries, or send email. You can also configure and run the same manual collection from:
 
 ```text
-http://127.0.0.1:8001/settings/sources
+http://127.0.0.1:8000/settings/sources
 ```
+
+### Independent Finance News MCP
+
+The [finance-news-mcp project](https://github.com/jvenkatasandeep/finance-news-mcp) runs as a separate local service. In a second terminal:
+
+```bash
+git clone https://github.com/jvenkatasandeep/finance-news-mcp.git
+cd finance-news-mcp
+uv sync
+uv run fastmcp run main.py:mcp --transport http --host 127.0.0.1 --port 8002
+```
+
+Keep that terminal running. In Source Settings, set `MCP Endpoint URL` to `http://127.0.0.1:8002/mcp`, save, select `Finance News MCP`, and run collection once. The app requests each configured publisher separately and stores public RSS metadata only. It does not copy subscription article text or start the MCP process automatically.
 
 After content is collected, generate a DeepSeek/OpenAI-compatible draft report manually from:
 
 ```text
-http://127.0.0.1:8001/reports
+http://127.0.0.1:8000/reports
 ```
 
 The `Generate AI Report` button summarizes the top 10 ranked local metadata events. English remains primary, while the headline, plain-language takeaway, market relevance, and watch points include concise Simplified Chinese translations. It does not send email or run the scheduler.
@@ -104,6 +117,9 @@ Configure source targets and credentials in `.env` or from the local source sett
 
 ```bash
 RSS_FEED_URLS=
+FINANCE_NEWS_MCP_URL=
+FINANCE_NEWS_MCP_SOURCES=bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha
+FINANCE_NEWS_MCP_ITEMS_PER_SOURCE=20
 SEC_USER_AGENT=your-app-name your-email@example.com
 SEC_CIK=0000320193
 ARXIV_SEARCH_QUERY=cat:q-fin*
@@ -137,7 +153,7 @@ DeepSeek, GLM, GPT-compatible gateways, and other OpenAI-compatible APIs can use
 You can also configure the same values from the local dashboard:
 
 ```text
-http://127.0.0.1:8001/settings/llm
+http://127.0.0.1:8000/settings/llm
 ```
 
 The settings page saves the API key into the local `.env` file and does not display it after saving.
@@ -145,7 +161,7 @@ The settings page saves the API key into the local `.env` file and does not disp
 Use Premium Sources for WSJ/Bloomberg-style reading workflows:
 
 ```text
-http://127.0.0.1:8001/premium
+http://127.0.0.1:8000/premium
 ```
 
 This page collects public RSS metadata, lets you add reading links manually, and stores your own notes, tickers, and importance scores. It does not use login cookies, bypass paywalls, scrape premium full text, or store copyrighted article bodies.
@@ -163,4 +179,4 @@ This page collects public RSS metadata, lets you add reading links manually, and
 
 ## Status
 
-Phase 10 is complete. The current backlog milestone is manual source collection for RSS, SEC EDGAR, arXiv, GitHub, and FRED.
+Phase 10 is complete. Current post-MVP work emphasizes fresher public-news coverage, source diversity, and report-quality calibration.

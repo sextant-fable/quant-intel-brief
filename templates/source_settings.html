@@ -67,7 +67,7 @@
       <legend>Run Sources</legend>
       {% for option in view.source_options %}
         <label class="checkbox-row">
-          <input name="{{ option.field }}" type="checkbox" checked>
+          <input name="{{ option.field }}" type="checkbox" {% if option.checked %}checked{% endif %}>
           {{ option.label }}
         </label>
       {% endfor %}
@@ -76,6 +76,36 @@
     <label>
       RSS Feed URLs
       <textarea name="rss_feed_urls" rows="3" placeholder="https://example.com/feed.xml">{{ view.rss_feed_urls }}</textarea>
+    </label>
+
+    <h2>Independent Finance News MCP</h2>
+
+    <div class="source-grid">
+      <label>
+        MCP Endpoint URL
+        <input
+          name="finance_news_mcp_url"
+          type="url"
+          value="{{ view.finance_news_mcp_url }}"
+          placeholder="http://127.0.0.1:8002/mcp"
+        >
+      </label>
+
+      <label>
+        Items Per Publisher
+        <input
+          name="finance_news_mcp_items_per_source"
+          type="number"
+          min="1"
+          max="100"
+          value="{{ view.finance_news_mcp_items_per_source }}"
+        >
+      </label>
+    </div>
+
+    <label>
+      MCP Publisher Sources
+      <input name="finance_news_mcp_sources" value="{{ view.finance_news_mcp_sources }}">
     </label>
 
     <div class="source-grid">

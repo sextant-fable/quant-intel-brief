@@ -4,7 +4,7 @@ Quant Intel Brief is a local-first personal intelligence system for quantitative
 
 ## Current Stage
 
-Phase 10 is complete. Post-MVP work currently includes publication-time freshness, source-balanced candidates, diverse Top 10 selection, and a long-term Research Feed. Future multi-phase work must follow the Future Backlog in `PLANS.md`.
+Phase 10 is complete. Post-MVP work currently includes publication-time freshness, source-balanced candidates, diverse Top 10 selection, a long-term Research Feed, and an optional independent Finance News MCP adapter. Future multi-phase work must follow the Future Backlog in `PLANS.md`.
 
 ## Repository Layout
 

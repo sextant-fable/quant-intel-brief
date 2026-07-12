@@ -8,6 +8,9 @@ from pathlib import Path
 
 SOURCE_ENV_KEYS = (
     "RSS_FEED_URLS",
+    "FINANCE_NEWS_MCP_URL",
+    "FINANCE_NEWS_MCP_SOURCES",
+    "FINANCE_NEWS_MCP_ITEMS_PER_SOURCE",
     "SEC_USER_AGENT",
     "SEC_CIK",
     "ARXIV_SEARCH_QUERY",
@@ -72,6 +75,9 @@ class SavedSourceSettings:
     has_quantconnect_user_id: bool
     has_quantconnect_token: bool
     quantconnect_organization_id: str
+    finance_news_mcp_url: str = ""
+    finance_news_mcp_sources: str = "bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha"
+    finance_news_mcp_items_per_source: int = 20
 
 
 def load_source_settings(env_path: Path) -> SavedSourceSettings:
@@ -110,6 +116,16 @@ def load_source_settings(env_path: Path) -> SavedSourceSettings:
         has_quantconnect_user_id=bool(values.get("QUANTCONNECT_USER_ID")),
         has_quantconnect_token=bool(values.get("QUANTCONNECT_TOKEN")),
         quantconnect_organization_id=values.get("QUANTCONNECT_ORGANIZATION_ID", ""),
+        finance_news_mcp_url=values.get("FINANCE_NEWS_MCP_URL", ""),
+        finance_news_mcp_sources=values.get(
+            "FINANCE_NEWS_MCP_SOURCES",
+            "bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha",
+        ),
+        finance_news_mcp_items_per_source=_positive_int(
+            values.get("FINANCE_NEWS_MCP_ITEMS_PER_SOURCE"),
+            default=20,
+            maximum=100,
+        ),
     )
 
 
@@ -156,6 +172,9 @@ def save_source_settings(
     quantconnect_token: str | None,
     clear_quantconnect_token: bool = False,
     quantconnect_organization_id: str,
+    finance_news_mcp_url: str = "",
+    finance_news_mcp_sources: str = "bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha",
+    finance_news_mcp_items_per_source: str | int = 20,
 ) -> SavedSourceSettings:
     """Persist source settings to `.env`, preserving blank secrets unless cleared."""
     existing = read_env_values(env_path)
@@ -216,6 +235,12 @@ def save_source_settings(
     )
     updates = {
         "RSS_FEED_URLS": _normalize_list_value(rss_feed_urls),
+        "FINANCE_NEWS_MCP_URL": finance_news_mcp_url.strip(),
+        "FINANCE_NEWS_MCP_SOURCES": _normalize_list_value(finance_news_mcp_sources)
+        or "bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha",
+        "FINANCE_NEWS_MCP_ITEMS_PER_SOURCE": str(
+            _positive_int(finance_news_mcp_items_per_source, default=20, maximum=100)
+        ),
         "SEC_USER_AGENT": sec_user_agent.strip(),
         "SEC_CIK": sec_cik.strip() or "0000320193",
         "ARXIV_SEARCH_QUERY": arxiv_search_query.strip() or "cat:q-fin*",
@@ -277,6 +302,9 @@ def save_source_settings(
         has_quantconnect_user_id=bool(next_quantconnect_user_id),
         has_quantconnect_token=bool(next_quantconnect_token),
         quantconnect_organization_id=updates["QUANTCONNECT_ORGANIZATION_ID"],
+        finance_news_mcp_url=updates["FINANCE_NEWS_MCP_URL"],
+        finance_news_mcp_sources=updates["FINANCE_NEWS_MCP_SOURCES"],
+        finance_news_mcp_items_per_source=int(updates["FINANCE_NEWS_MCP_ITEMS_PER_SOURCE"]),
     )
 
 
@@ -340,6 +368,14 @@ def _next_secret_value(existing_value: str, submitted_value: str | None, *, clea
 
 def _normalize_list_value(value: str) -> str:
     return ",".join(part.strip() for part in re.split(r"[\n,]+", value) if part.strip())
+
+
+def _positive_int(value: str | int | None, *, default: int, maximum: int) -> int:
+    try:
+        parsed = int(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+    return min(max(1, parsed), maximum)
 
 
 __all__ = [

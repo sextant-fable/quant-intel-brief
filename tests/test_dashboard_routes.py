@@ -424,6 +424,9 @@ def test_source_settings_page_saves_local_env_without_echoing_secrets(tmp_path: 
             "source_github": "on",
             "source_fred": "on",
             "rss_feed_urls": "https://feeds.example.test/a.xml\nhttps://feeds.example.test/b.xml",
+            "finance_news_mcp_url": "http://127.0.0.1:8002/mcp",
+            "finance_news_mcp_sources": "bloomberg,wsj,cnbc",
+            "finance_news_mcp_items_per_source": "18",
             "sec_user_agent": "quant-intel-test contact@example.test",
             "sec_cik": "0000789019",
             "arxiv_search_query": "cat:q-fin.CP",
@@ -476,6 +479,9 @@ def test_source_settings_page_saves_local_env_without_echoing_secrets(tmp_path: 
         in env_text
     )
     assert "SEC_USER_AGENT=quant-intel-test contact@example.test" in env_text
+    assert "FINANCE_NEWS_MCP_URL=http://127.0.0.1:8002/mcp" in env_text
+    assert "FINANCE_NEWS_MCP_SOURCES=bloomberg,wsj,cnbc" in env_text
+    assert "FINANCE_NEWS_MCP_ITEMS_PER_SOURCE=18" in env_text
     assert "GITHUB_TOKEN=github-secret-token" in env_text
     assert "FRED_API_KEY=fred-secret-key" in env_text
     assert "NEWSAPI_KEY=newsapi-secret-key" in env_text

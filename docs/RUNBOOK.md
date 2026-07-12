@@ -94,7 +94,7 @@ Tests must use fake clients and make no real LLM calls. Local future runs should
 Local dashboard configuration is available at:
 
 ```text
-http://127.0.0.1:8001/settings/llm
+http://127.0.0.1:8000/settings/llm
 ```
 
 Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-compatible provider. The page writes to the local `.env` file, leaves saved API keys hidden, and does not test-call the provider. Legacy `DEEPSEEK_API_KEY` values are recognized and can be migrated by saving the page.
@@ -104,7 +104,7 @@ Use this page to choose DeepSeek, GLM/Z.AI, Kimi/Moonshot, or a custom OpenAI-co
 Run selected collectors manually:
 
 ```bash
-python -m app.jobs.collect_once --sources rss,sec_edgar,arxiv,github,fred,newsapi,gdelt,alphavantage,finnhub,reddit,youtube,x_api,stackexchange,quantconnect
+python -m app.jobs.collect_once --sources rss,finance_news_mcp,sec_edgar,arxiv,github,fred,newsapi,gdelt,alphavantage,finnhub,reddit,youtube,x_api,stackexchange,quantconnect
 ```
 
 The command writes metadata-only records and source statuses into local SQLite. It does not run the scheduler, call an LLM, generate summaries, or send email.
@@ -112,17 +112,38 @@ The command writes metadata-only records and source statuses into local SQLite. 
 The same manual run can be started from the local dashboard:
 
 ```text
-http://127.0.0.1:8001/settings/sources
+http://127.0.0.1:8000/settings/sources
 ```
 
 Use `Save Source Settings` to update local `.env` values. Use `Run Collect Once` to run only the checked sources. The page hides saved secrets after saving and shows `saved` next to stored source keys.
+
+### Finance News MCP
+
+Run the third-party MCP in its own terminal and environment:
+
+```bash
+git clone https://github.com/jvenkatasandeep/finance-news-mcp.git
+cd finance-news-mcp
+uv sync
+uv run fastmcp run main.py:mcp --transport http --host 127.0.0.1 --port 8002
+```
+
+Then save these local app settings:
+
+```bash
+FINANCE_NEWS_MCP_URL=http://127.0.0.1:8002/mcp
+FINANCE_NEWS_MCP_SOURCES=bloomberg,wsj,cnbc,marketwatch,ft,seekingalpha
+FINANCE_NEWS_MCP_ITEMS_PER_SOURCE=20
+```
+
+The app calls `get_latest_finance_news` once per configured publisher so each publisher has an independent source quota and status. If the MCP is stopped or malformed, those publishers fail noncritically. Only titles, links, public descriptions, publishers, and publication timestamps are retained.
 
 ## Manual AI Report Generation
 
 After collection, open:
 
 ```text
-http://127.0.0.1:8001/reports
+http://127.0.0.1:8000/reports
 ```
 
 Use `Generate AI Report` to summarize top-ranked local content with the configured OpenAI-compatible provider. This is a user-triggered LLM call. It does not send email, start the scheduler, bypass paywalls, or process premium full text.
@@ -186,7 +207,7 @@ pytest tests/test_collect_once.py tests/test_collectors.py
 Use the local premium reading queue at:
 
 ```text
-http://127.0.0.1:8001/premium
+http://127.0.0.1:8000/premium
 ```
 
 The page supports:

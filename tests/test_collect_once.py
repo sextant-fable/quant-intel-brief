@@ -36,6 +36,7 @@ def test_supported_sources_include_public_market_and_community_adapters() -> Non
         "arxiv",
         "github",
         "fred",
+        "finance_news_mcp",
         "newsapi",
         "gdelt",
         "alphavantage",
@@ -78,6 +79,8 @@ def test_build_collectors_uses_local_settings_without_collecting() -> None:
         quantconnect_user_id=SecretStr("fixture-user"),
         quantconnect_token=SecretStr("fixture-token"),
         quantconnect_organization_id="fixture-org",
+        finance_news_mcp_url="http://127.0.0.1:8002/mcp",
+        finance_news_mcp_items_per_source=20,
     )
 
     collectors = build_collectors(settings, SUPPORTED_SOURCES)
@@ -89,6 +92,12 @@ def test_build_collectors_uses_local_settings_without_collecting() -> None:
         "arxiv",
         "github",
         "fred",
+        "finance_news_mcp_bloomberg",
+        "finance_news_mcp_wsj",
+        "finance_news_mcp_cnbc",
+        "finance_news_mcp_marketwatch",
+        "finance_news_mcp_ft",
+        "finance_news_mcp_seekingalpha",
         "newsapi",
         "gdelt",
         "alphavantage",

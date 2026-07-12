@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import httpx
 import pytest
 import respx
+from mcp.types import CallToolResult, TextContent
 from sqlmodel import Session, select
 
 from app.collectors.alphavantage import AlphaVantageCollector
@@ -17,6 +19,10 @@ from app.collectors.base import (
     CollectorStatus,
     SourceCollector,
     persist_collector_result,
+)
+from app.collectors.finance_news_mcp import (
+    FinanceNewsMcpCollector,
+    _articles_from_tool_result,
 )
 from app.collectors.finnhub import FinnhubCollector
 from app.collectors.fred import FredCollector
@@ -39,6 +45,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 FORBIDDEN_TEXT_KEYS = {"body", "content", "full_text", "article_text", "transcript"}
 
 
+class FakeFinanceNewsMcpClient:
+    """Fixture MCP client that never opens a network connection."""
+
+    def __init__(self, articles: list[dict[str, Any]]) -> None:
+        self.articles = articles
+        self.calls: list[tuple[str, int]] = []
+
+    async def get_latest_news(self, *, source: str, limit: int) -> list[dict[str, Any]]:
+        self.calls.append((source, limit))
+        return self.articles[:limit]
+
+
 def test_rss_feed_parse_success_from_fixture() -> None:
     collector = RssCollector(
         feed_url="https://feeds.example.test/rss.xml",
@@ -55,6 +73,75 @@ def test_rss_feed_parse_success_from_fixture() -> None:
     assert result.items[0].language == "en-us"
     assert result.items[0].excerpt == "Compact market metadata with HTML tags."
     assert "content" not in result.items[0].raw_metadata
+
+
+@pytest.mark.asyncio
+async def test_finance_news_mcp_collector_normalizes_mocked_tool_metadata() -> None:
+    client = FakeFinanceNewsMcpClient(
+        [
+            {
+                "title": "Older market item",
+                "link": "https://www.bloomberg.com/news/older?utm_source=rss",
+                "published_date": "2026-07-12 08:00:00",
+                "description": "<p>Older public summary.</p>",
+                "source_name": "bloomberg",
+            },
+            {
+                "title": "Latest market item",
+                "link": "https://www.bloomberg.com/news/latest",
+                "published_date": "2026-07-12 10:00:00",
+                "description": "<p>Latest <strong>public</strong> summary.</p>",
+                "source_name": "bloomberg",
+            },
+        ]
+    )
+    collector = FinanceNewsMcpCollector(
+        endpoint_url="http://127.0.0.1:8002/mcp",
+        publisher_source="bloomberg",
+        config=CollectorConfig(max_items=20),
+        client=client,
+    )
+
+    result = await collector.collect()
+
+    assert result.status == CollectorStatus.SUCCESS
+    assert result.source_name == "finance_news_mcp_bloomberg"
+    assert [item.title for item in result.items] == ["Latest market item", "Older market item"]
+    assert result.items[0].excerpt == "Latest public summary."
+    assert result.items[0].publisher == "Bloomberg"
+    assert result.items[0].published_at is not None
+    assert result.items[0].raw_metadata == {
+        "mcp_tool": "get_latest_finance_news",
+        "publisher_source": "bloomberg",
+    }
+    assert client.calls == [("bloomberg", 20)]
+
+
+@pytest.mark.asyncio
+async def test_finance_news_mcp_requires_http_endpoint_before_client_call() -> None:
+    client = FakeFinanceNewsMcpClient([])
+    collector = FinanceNewsMcpCollector(
+        endpoint_url="",
+        publisher_source="wsj",
+        client=client,
+    )
+
+    result = await collector.collect()
+
+    assert result.status == CollectorStatus.FAILED
+    assert "FINANCE_NEWS_MCP_URL" in (result.message or "")
+    assert client.calls == []
+
+
+def test_finance_news_mcp_decodes_structured_and_text_tool_results() -> None:
+    article = {"title": "Fixture", "link": "https://example.test/fixture"}
+    structured = CallToolResult(content=[], structuredContent={"result": [article]})
+    text_result = CallToolResult(
+        content=[TextContent(type="text", text=json.dumps([article]))],
+    )
+
+    assert _articles_from_tool_result(structured) == [article]
+    assert _articles_from_tool_result(text_result) == [article]
 
 
 def test_rss_empty_feed_returns_empty_result() -> None:

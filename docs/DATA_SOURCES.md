@@ -5,6 +5,7 @@ This document tracks planned source adapters and their legal/technical requireme
 | Source | Module | Status | Access | Notes |
 | --- | --- | --- | --- | --- |
 | RSS | `app/collectors/rss.py` | Phase 1 implemented | Public feeds | Metadata-only RSS/Atom parsing with mocked HTTP tests. Respect feed terms and robots guidance. |
+| Finance News MCP | `app/collectors/finance_news_mcp.py` | Post-MVP implemented | Independent Streamable HTTP MCP | Calls `get_latest_finance_news` per publisher and stores public RSS metadata only. The MCP process is user-managed and optional. |
 | NewsAPI | `app/collectors/newsapi.py` | Phase 2 implemented | API key | Metadata-only `/v2/everything` adapter. Store key in `.env`. |
 | GDELT | `app/collectors/gdelt.py` | Phase 2 implemented | Public/API | Metadata-only DOC API adapter. Confirm current API limits before live use. |
 | Alpha Vantage | `app/collectors/alphavantage.py` | Phase 2 implemented | API key | Metadata-only `NEWS_SENTIMENT` adapter. Use only permitted endpoints. |
@@ -24,6 +25,7 @@ This document tracks planned source adapters and their legal/technical requireme
 ## Source Rules
 
 - Prefer official APIs and documented feeds.
+- Treat third-party MCP servers as independent, untrusted metadata providers; validate and normalize every returned field.
 - Confirm current terms and rate limits before implementing each adapter.
 - Keep credentials in `.env`; never commit secrets, cookies, or session exports.
 - Store metadata, source links, compact excerpts, and hashes by default.

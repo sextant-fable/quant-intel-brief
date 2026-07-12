@@ -8,6 +8,7 @@ This project must respect source terms, copyright, privacy, and financial-advice
 - Do not bypass paywalls, authentication, rate limits, robots guidance, or access controls.
 - Do not commit credentials, cookies, private tokens, or exported sessions.
 - Confirm platform terms before collection, storage, or redistribution.
+- MCP transport does not change source permissions. Finance-news MCP results remain metadata/public-summary records and must not be expanded into paywalled full text.
 
 ## Content Use
 
