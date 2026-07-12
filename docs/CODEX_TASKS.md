@@ -43,6 +43,9 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add local dashboard page for source settings and manual collect-once runs.
 - [x] Expand manual collect-once to market API, community, and QuantConnect sources.
 - [x] Add Premium Sources reading queue for public metadata and user notes.
+- [x] Add an English-first bilingual Top 10 pre-market experience.
+- [x] Persist structured report events for Today, Feed, report detail, and email rendering.
+- [x] Add an explicit one-click brief refresh for credential-ready sources.
 
 ## Phase 0 Done Criteria
 

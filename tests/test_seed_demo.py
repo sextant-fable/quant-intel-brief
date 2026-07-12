@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlmodel import Session, select
 
 from app.core.timezones import UTC
-from app.db.models import ContentItem, Report, ReportSection, SourceStatus
+from app.db.models import ContentItem, Report, ReportEventRecord, ReportSection, SourceStatus
 from app.db.session import create_db_engine, init_db
 from app.jobs.seed_demo import DEMO_REPORT_TITLE, seed_demo
 
@@ -28,6 +28,9 @@ def test_seed_demo_populates_dashboard_data() -> None:
         sections = session.exec(
             select(ReportSection).where(ReportSection.report_id == result.report_id)
         ).all()
+        report_events = session.exec(
+            select(ReportEventRecord).where(ReportEventRecord.report_id == result.report_id)
+        ).all()
 
     assert result.content_items == 6
     assert result.source_statuses == 6
@@ -35,7 +38,8 @@ def test_seed_demo_populates_dashboard_data() -> None:
     assert len(statuses) == 6
     assert report is not None
     assert report.title == DEMO_REPORT_TITLE
-    assert len(sections) == 7
+    assert len(sections) == 5
+    assert len(report_events) == 6
     assert any(item.tickers == ["SPY"] for item in items)
     assert any(item.source_name == "sec_edgar" for item in items)
     assert any(section.source_refs for section in sections)

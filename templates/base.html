@@ -8,15 +8,23 @@
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="/dashboard/today">{{ settings.dashboard_title }}</a>
+      <a class="brand" href="/dashboard/today" aria-label="Quant Intel Brief home">
+        <span class="brand-mark">QI</span>
+        <span>
+          <strong>Quant Intel Brief</strong>
+          <small>Daily market intelligence</small>
+        </span>
+      </a>
       <nav class="nav" aria-label="Primary">
-        <a href="/dashboard/today">Today</a>
-        <a href="/feed">Feed</a>
-        <a href="/reports">Reports</a>
+        <a href="/dashboard/today" {% if request.url.path == "/dashboard/today" %}class="is-active"{% endif %}>Today</a>
+        <a href="/feed" {% if request.url.path == "/feed" %}class="is-active"{% endif %}>Feed</a>
+        <a href="/reports" {% if request.url.path.startswith("/reports") %}class="is-active"{% endif %}>Reports</a>
+        <a href="/premium" {% if request.url.path == "/premium" %}class="is-active"{% endif %}>Premium</a>
+      </nav>
+      <nav class="nav nav-utility" aria-label="Settings">
         <a href="/sources">Sources</a>
-        <a href="/premium">Premium</a>
-        <a href="/settings/llm">AI Settings</a>
-        <a href="/settings/sources">Source Settings</a>
+        <a href="/settings/llm">AI</a>
+        <a href="/settings/sources">Settings</a>
       </nav>
     </header>
     {% block body %}{% endblock %}

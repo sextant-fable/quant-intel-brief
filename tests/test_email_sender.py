@@ -27,9 +27,16 @@ def _report_email() -> OutboundEmail:
     summary = EventSummary(
         event_id="macro",
         headline="FOMC path update",
+        headline_zh="FOMC 利率路径更新",
         factual_summary="A cited source reported an FOMC path update.",
+        factual_summary_zh="引用来源报告了 FOMC 利率路径变化。",
         market_relevance="Relevant as a macro risk input.",
+        market_relevance_zh="这可作为宏观风险观察信号。",
         uncertainty="Future Fed communication may change interpretation.",
+        what_to_watch=["Watch the next Fed communication."],
+        what_to_watch_zh=["关注下一次美联储沟通。"],
+        source_credibility="high",
+        source_credibility_reason="The event uses a cited official-style source.",
         source_ids=["source-1"],
         source_urls=["https://example.test/fomc"],
         assets=["macro"],
@@ -63,6 +70,8 @@ def test_build_report_email_normalizes_recipients_and_preview_body() -> None:
     assert message.subject == "Quant Intel Brief - 2026-07-08"
     assert message.recipients == ["alpha@example.test", "beta@example.test"]
     assert "FOMC path update" in message.html_body
+    assert "FOMC 利率路径更新" in message.html_body
+    assert "Why it matters" in (message.text_body or "")
     assert "https://example.test/fomc" in (message.text_body or "")
 
 

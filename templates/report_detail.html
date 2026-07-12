@@ -1,30 +1,123 @@
 {% extends "base.html" %}
 {% block title %}{{ view.report.title }} - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
-<main class="shell" data-page="report-detail">
-  <section class="page-heading">
+<main class="shell report-page" data-page="report-detail">
+  <section class="page-heading report-heading">
     <div>
       <p class="eyebrow">{{ view.report.report_date }}</p>
       <h1>{{ view.report.title }}</h1>
+      <p class="heading-translation">每日量化情报简报</p>
     </div>
-    <p class="timestamp">{{ view.report.status }}</p>
+    <span class="report-status">{{ view.report.status }}</span>
   </section>
 
   {% if view.report.source_coverage_note %}
-    <p class="notice">{{ view.report.source_coverage_note }}</p>
+    <p class="coverage-note">{{ view.report.source_coverage_note }}</p>
   {% endif %}
 
-  {% if view.sections %}
-    {% for section in view.sections %}
-    <section class="report-section">
-      <h2>{{ section.title }}</h2>
-      {% if section.content %}<p>{{ section.content }}</p>{% endif %}
-      {% if section.source_refs %}
-        <p class="tags">
-          {% for source_ref in section.source_refs %}<span>{{ source_ref }}</span>{% endfor %}
-        </p>
-      {% endif %}
+  {% if view.has_structured_events %}
+    <section class="section-block">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">RANKED BY MARKET RELEVANCE</p>
+          <h2>Top 10 Today</h2>
+          <p class="heading-translation">今日重点</p>
+        </div>
+      </div>
+      <ol class="top-events report-top-events">
+        {% for event in view.top_events %}
+          <li class="event-card">
+            <div class="event-rank">{{ loop.index }}</div>
+            <article>
+              <div class="event-meta-row">
+                <span>Score {{ "%.1f"|format(event.score) }}</span>
+                <span class="credibility credibility-{{ event.source_credibility }}">{{ event.source_credibility|upper }} confidence</span>
+              </div>
+              <h3>{{ event.headline }}</h3>
+              <p class="headline-translation" lang="zh-Hans">{{ event.headline_zh }}</p>
+              <div class="event-explainer">
+                <div>
+                  <h4>What happened</h4>
+                  <p>{{ event.factual_summary }}</p>
+                  <p class="translation" lang="zh-Hans">{{ event.factual_summary_zh }}</p>
+                </div>
+                <div>
+                  <h4>Why it matters</h4>
+                  <p>{{ event.market_relevance }}</p>
+                  <p class="translation" lang="zh-Hans">{{ event.market_relevance_zh }}</p>
+                </div>
+              </div>
+              <div class="event-footer-grid">
+                <div>
+                  <h4>May affect</h4>
+                  <p class="tags">
+                    {% for ticker in event.tickers %}<span class="tag-ticker">{{ ticker }}</span>{% endfor %}
+                    {% for asset in event.assets %}<span>{{ asset }}</span>{% endfor %}
+                  </p>
+                </div>
+                <div>
+                  <h4>Watch next</h4>
+                  <ul class="watch-list">
+                    {% for point in event.what_to_watch %}
+                      <li>{{ point }}{% if loop.index0 < event.what_to_watch_zh|length %}<small lang="zh-Hans">{{ event.what_to_watch_zh[loop.index0] }}</small>{% endif %}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+                <div>
+                  <h4>Sources & confidence</h4>
+                  <p class="source-reason">{{ event.source_credibility_reason }}</p>
+                  <p class="source-links">
+                    {% for source in event.source_links %}<a href="{{ source.url }}" target="_blank" rel="noreferrer">Source {{ loop.index }}</a>{% endfor %}
+                  </p>
+                </div>
+              </div>
+            </article>
+          </li>
+        {% endfor %}
+      </ol>
     </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">BY MARKET LENS</p>
+          <h2>Market Sections</h2>
+          <p class="heading-translation">市场板块</p>
+        </div>
+      </div>
+      <div class="report-section-list">
+        {% for section in view.market_sections %}
+          <section>
+            <header>
+              <h3>{{ section.title }}</h3>
+              <span>{{ section.title_zh }}</span>
+              <strong>{{ section.count }}</strong>
+            </header>
+            {% if section.events %}
+              <ul>
+                {% for event in section.events %}
+                  <li><span>{{ event.headline }}</span><small lang="zh-Hans">{{ event.headline_zh }}</small></li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p>No qualifying events in this section.</p>
+            {% endif %}
+          </section>
+        {% endfor %}
+      </div>
+    </section>
+  {% elif view.sections %}
+    <p class="notice">This is a legacy report. Generate a fresh brief to see the bilingual Top 10 format.</p>
+    {% for section in view.sections %}
+      <section class="legacy-report-section">
+        <h2>{{ section.title }}</h2>
+        {% if section.content %}<p>{{ section.content }}</p>{% endif %}
+        {% if section.source_refs %}
+          <p class="source-links">
+            {% for source_ref in section.source_refs %}<a href="{{ source_ref }}">Source {{ loop.index }}</a>{% endfor %}
+          </p>
+        {% endif %}
+      </section>
     {% endfor %}
   {% else %}
     <p class="empty-state">This report has no local sections yet.</p>

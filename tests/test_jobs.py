@@ -18,6 +18,7 @@ from app.db.models import (
     EventItem,
     RawItem,
     Report,
+    ReportEventRecord,
     ReportSection,
     Source,
     SourceStatus,
@@ -71,9 +72,16 @@ def _summary_result() -> SummaryResult:
         summary=EventSummary(
             event_id="event-1",
             headline="SPY options volatility update",
+            headline_zh="SPY 期权波动率出现变化",
             factual_summary="Cited sources reported an options volatility update.",
+            factual_summary_zh="引用来源报告了期权波动率变化。",
             market_relevance="Relevant as an informational volatility input.",
+            market_relevance_zh="这可作为波动率观察信号。",
             uncertainty="Further source coverage may change the interpretation.",
+            what_to_watch=["Watch for confirmation in options data."],
+            what_to_watch_zh=["关注期权数据是否确认这一变化。"],
+            source_credibility="medium",
+            source_credibility_reason="One cited market source was provided.",
             source_ids=["source-1"],
             source_urls=["https://example.test/newsapi/1"],
             tickers=["SPY"],
@@ -103,6 +111,9 @@ def test_run_daily_orchestrates_fixture_collectors_and_report(tmp_path: Path) ->
         sections = session.exec(
             select(ReportSection).where(ReportSection.report_id == result.report_id)
         ).all()
+        report_events = session.exec(
+            select(ReportEventRecord).where(ReportEventRecord.report_id == result.report_id)
+        ).all()
         delivery_logs = session.exec(select(DeliveryLog)).all()
 
     assert result.collector_count == 2
@@ -113,7 +124,9 @@ def test_run_daily_orchestrates_fixture_collectors_and_report(tmp_path: Path) ->
     assert report is not None
     assert "noncritical failure" in (report.source_coverage_note or "")
     assert [status.source_name for status in statuses] == ["finnhub", "newsapi"]
-    assert len(sections) == 7
+    assert len(sections) == 5
+    assert len(report_events) == 1
+    assert report_events[0].headline_zh == "SPY 期权波动率出现变化"
     assert any("https://example.test/newsapi/1" in section.source_refs for section in sections)
     assert len(delivery_logs) == 1
     assert delivery_logs[0].recipient_hash is not None

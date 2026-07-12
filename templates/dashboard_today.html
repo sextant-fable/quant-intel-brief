@@ -1,105 +1,204 @@
 {% extends "base.html" %}
-{% block title %}Today - {{ settings.dashboard_title }}{% endblock %}
+{% block title %}Pre-Market Brief - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
-<main class="shell" data-page="dashboard-today">
-  <section class="page-heading">
+<main class="shell dashboard" data-page="dashboard-today">
+  <section class="brief-header">
     <div>
-      <p class="eyebrow">Local dashboard</p>
-      <h1>Today</h1>
+      <p class="eyebrow">DAILY MARKET INTELLIGENCE</p>
+      <h1>Pre-Market Brief</h1>
+      <p class="heading-translation">今日盘前简报</p>
     </div>
-    <p class="timestamp">Updated {{ view.generated_at }}</p>
+    <form action="/dashboard/refresh" method="post" data-refresh-brief>
+      <button class="button-primary" type="submit">
+        <span>Refresh Brief</span>
+        <small>一键更新</small>
+      </button>
+    </form>
   </section>
 
-  <section class="metrics" aria-label="Summary">
-    <div class="metric">
-      <span class="metric-value">{{ view.counts.item_count }}</span>
-      <span class="metric-label">Items</span>
-    </div>
-    <div class="metric">
-      <span class="metric-value">{{ view.counts.report_count }}</span>
-      <span class="metric-label">Reports</span>
-    </div>
-    <div class="metric">
-      <span class="metric-value">{{ view.counts.source_count }}</span>
-      <span class="metric-label">Sources</span>
-    </div>
-    <div class="metric">
-      <span class="metric-value">{{ view.counts.source_failures }}</span>
-      <span class="metric-label">Failures</span>
-    </div>
-  </section>
-
-  <section class="grid-two">
+  <section class="market-clock" aria-label="Market timing and data status">
     <div>
-      <div class="section-heading">
-        <h2>Recent Feed</h2>
-        <a href="/feed">Open feed</a>
-      </div>
-      {% if view.recent_items %}
-        <ul class="item-list">
-          {% for item in view.recent_items %}
-          <li>
-            <a class="item-title" href="{{ item.url }}">{{ item.title }}</a>
-            <p class="item-meta">{{ item.source_name }}{% if item.published_at %} | {{ item.published_at }}{% endif %}</p>
-            {% if item.summary %}<p class="item-summary">{{ item.summary }}</p>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="empty-state">No local content items yet.</p>
-      {% endif %}
+      <span class="utility-label">NEXT REGULAR OPEN</span>
+      <strong data-market-countdown data-market-open="{{ view.next_market_open }}">--:--:--</strong>
+      <small>美股开盘倒计时</small>
     </div>
-
     <div>
-      <div class="section-heading">
-        <h2>Latest Reports</h2>
-        <a href="/reports">Archive</a>
-      </div>
-      {% if view.latest_reports %}
-        <ul class="item-list">
-          {% for report in view.latest_reports %}
-          <li>
-            <a class="item-title" href="/reports/{{ report.id }}">{{ report.title }}</a>
-            <p class="item-meta">{{ report.report_date }} | {{ report.status }}</p>
-            {% if report.source_coverage_note %}<p class="item-summary">{{ report.source_coverage_note }}</p>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="empty-state">No local reports have been generated yet.</p>
-      {% endif %}
+      <span class="utility-label">DATA UPDATED</span>
+      <strong data-local-datetime="{{ view.data_updated_at }}">{{ view.data_updated_at or "No data" }}</strong>
+      <small>数据更新时间</small>
+    </div>
+    <div>
+      <span class="utility-label">COVERAGE</span>
+      <strong>{{ view.counts.item_count }} items · {{ view.counts.source_count }} sources</strong>
+      <small>{{ view.counts.source_failures }} source issue{{ "" if view.counts.source_failures == 1 else "s" }}</small>
     </div>
   </section>
 
-  <section>
-    <div class="section-heading">
-      <h2>Source Status</h2>
-      <a href="/sources">All sources</a>
-    </div>
-    {% if view.source_statuses %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Source</th>
-              <th>Status</th>
-              <th>Last Checked</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for status in view.source_statuses %}
-            <tr>
-              <td>{{ status.source_name }}</td>
-              <td><span class="status {% if status.is_failure %}status-failed{% else %}status-ok{% endif %}">{{ status.status }}</span></td>
-              <td>{{ status.last_checked_at }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+  {% if view.refresh %}
+    {% if view.refresh.error %}
+      <p class="notice notice-error">{{ view.refresh.error }}</p>
     {% else %}
-      <p class="empty-state">No source status records yet.</p>
+      <p class="notice notice-success">
+        Brief refreshed from {{ view.refresh.source_count }} configured source{{ "" if view.refresh.source_count == 1 else "s" }}.
+        {% if view.refresh.report %}{{ view.refresh.report.successful_summary_count }} Top 10 event{{ "" if view.refresh.report.successful_summary_count == 1 else "s" }} summarized.{% endif %}
+      </p>
     {% endif %}
+  {% endif %}
+
+  <section class="daily-focus" aria-labelledby="daily-focus-title">
+    <p class="section-kicker">THE DAY IN ONE LINE</p>
+    <h2 id="daily-focus-title">{{ view.brief.daily_focus.en }}</h2>
+    <p lang="zh-Hans">{{ view.brief.daily_focus.zh }}</p>
+  </section>
+
+  <section class="section-block" aria-labelledby="top-ten-title">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">RANKED BY MARKET RELEVANCE</p>
+        <h2 id="top-ten-title">Top 10 Today</h2>
+        <p class="heading-translation">今日重点</p>
+      </div>
+      {% if view.brief.report_id %}
+        <a class="text-link" href="/reports/{{ view.brief.report_id }}">Open full report</a>
+      {% endif %}
+    </div>
+
+    {% if view.brief.top_events %}
+      <ol class="top-events">
+        {% for event in view.brief.top_events %}
+          <li class="event-card">
+            <div class="event-rank" aria-label="Rank {{ loop.index }}">{{ loop.index }}</div>
+            <article>
+              <div class="event-meta-row">
+                <span class="section-label">{{ event.section_key|replace("_", " ") }}</span>
+                <span>Score {{ "%.1f"|format(event.score) }}</span>
+                <span class="credibility credibility-{{ event.source_credibility }}">
+                  {{ event.source_credibility|upper }} confidence · {{ event.source_credibility_zh }}可信度
+                </span>
+              </div>
+              <h3>{{ event.headline }}</h3>
+              <p class="headline-translation" lang="zh-Hans">{{ event.headline_zh }}</p>
+
+              <div class="event-explainer">
+                <div>
+                  <h4>What happened</h4>
+                  <p>{{ event.factual_summary }}</p>
+                  <p class="translation" lang="zh-Hans">{{ event.factual_summary_zh }}</p>
+                </div>
+                <div>
+                  <h4>Why it matters</h4>
+                  <p>{{ event.market_relevance }}</p>
+                  <p class="translation" lang="zh-Hans">{{ event.market_relevance_zh }}</p>
+                </div>
+              </div>
+
+              <div class="event-footer-grid">
+                <div>
+                  <h4>May affect</h4>
+                  <p class="tags">
+                    {% for ticker in event.tickers %}<span class="tag-ticker">{{ ticker }}</span>{% endfor %}
+                    {% for asset in event.assets %}<span>{{ asset }}</span>{% endfor %}
+                    {% if not event.tickers and not event.assets %}<span>Broad market context</span>{% endif %}
+                  </p>
+                </div>
+                <div>
+                  <h4>Watch next</h4>
+                  <ul class="watch-list">
+                    {% for point in event.what_to_watch %}
+                      <li>
+                        {{ point }}
+                        {% if loop.index0 < event.what_to_watch_zh|length %}<small lang="zh-Hans">{{ event.what_to_watch_zh[loop.index0] }}</small>{% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+                <div>
+                  <h4>Sources & confidence</h4>
+                  <p class="source-reason">{{ event.source_credibility_reason }}</p>
+                  <p class="source-links">
+                    {% for source in event.source_links %}
+                      <a href="{{ source.url }}" target="_blank" rel="noreferrer">Source {{ loop.index }}</a>
+                    {% endfor %}
+                  </p>
+                </div>
+              </div>
+            </article>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <div class="empty-state empty-state-action">
+        <strong>No structured Top 10 yet.</strong>
+        <span>点击 “Refresh Brief” 后生成英文简报和关键中文翻译。</span>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="section-block" aria-labelledby="market-sections-title">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">BY MARKET LENS</p>
+        <h2 id="market-sections-title">Market Sections</h2>
+        <p class="heading-translation">市场板块</p>
+      </div>
+    </div>
+    <div class="market-sections">
+      {% for section in view.brief.market_sections %}
+        <a href="#section-{{ section.key }}">
+          <span>{{ section.title }}</span>
+          <small>{{ section.title_zh }}</small>
+          <strong>{{ section.count }}</strong>
+        </a>
+      {% endfor %}
+    </div>
+
+    <div class="section-summaries">
+      {% for section in view.brief.market_sections %}
+        {% if section.events %}
+          <section id="section-{{ section.key }}">
+            <header>
+              <h3>{{ section.title }}</h3>
+              <span>{{ section.title_zh }}</span>
+            </header>
+            <ul>
+              {% for event in section.events %}
+                <li>
+                  <strong>{{ event.headline }}</strong>
+                  <span lang="zh-Hans">{{ event.headline_zh }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section-block source-health" aria-labelledby="source-health-title">
+    <details {% if view.source_failures %}open{% endif %}>
+      <summary>
+        <span>
+          <strong id="source-health-title">Source Status</strong>
+          <small>数据源状态</small>
+        </span>
+        <span class="health-count {% if view.source_failures %}has-failures{% endif %}">
+          {% if view.source_failures %}{{ view.source_failures|length }} need attention{% else %}All clear{% endif %}
+        </span>
+      </summary>
+      {% if view.source_failures %}
+        <div class="source-failure-list">
+          {% for status in view.source_failures %}
+            <div>
+              <strong>{{ status.source_name }}</strong>
+              <span>{{ status.message or status.status }}</span>
+              <time>{{ status.last_checked_at }}</time>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="source-ok-copy">No source failures are currently recorded.</p>
+      {% endif %}
+    </details>
   </section>
 </main>
 {% endblock %}

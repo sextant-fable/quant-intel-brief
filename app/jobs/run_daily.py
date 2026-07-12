@@ -18,7 +18,7 @@ from app.collectors.base import (
 )
 from app.core.config import get_settings
 from app.core.timezones import UTC, utc_now
-from app.db.models import DeliveryLog, Report, ReportSection
+from app.db.models import DeliveryLog, Report, ReportEventRecord, ReportSection
 from app.db.session import create_db_engine, init_db
 from app.email.sender import EmailDeliveryResult, EmailSender, build_report_email
 from app.llm.schemas import SummaryResult
@@ -120,6 +120,33 @@ def _persist_report(
 
     for section in daily_report.sections:
         session.add(_report_section(report, section))
+        for event in section.events:
+            session.add(
+                ReportEventRecord(
+                    report_id=report.id,
+                    section_key=section.key,
+                    position=_event_position(daily_report, event.event_id),
+                    event_id=event.event_id,
+                    ranked_item_id=event.ranked_item_id,
+                    score=event.score,
+                    headline=event.headline,
+                    headline_zh=event.headline_zh,
+                    factual_summary=event.factual_summary,
+                    factual_summary_zh=event.factual_summary_zh,
+                    market_relevance=event.market_relevance,
+                    market_relevance_zh=event.market_relevance_zh,
+                    uncertainty=event.uncertainty,
+                    what_to_watch=event.what_to_watch,
+                    what_to_watch_zh=event.what_to_watch_zh,
+                    source_credibility=event.source_credibility,
+                    source_credibility_reason=event.source_credibility_reason,
+                    source_ids=event.source_ids,
+                    source_urls=event.source_urls,
+                    tickers=event.tickers,
+                    assets=event.assets,
+                    quant_topics=event.quant_topics,
+                )
+            )
     session.flush()
     return report
 
@@ -143,6 +170,13 @@ def _section_content(section: ReportSectionData) -> str | None:
     )
 
 
+def _event_position(daily_report: DailyReport, event_id: str) -> int:
+    for position, event in enumerate(daily_report.top_events, start=1):
+        if event.event_id == event_id:
+            return position
+    return len(daily_report.top_events) + 1
+
+
 def _write_report_html(
     daily_report: DailyReport,
     html: str,
@@ -151,7 +185,10 @@ def _write_report_html(
     if reports_dir is None:
         return None
     reports_dir.mkdir(parents=True, exist_ok=True)
-    path = reports_dir / f"{daily_report.report_date.isoformat()}-quant-intel-brief.html"
+    timestamp = daily_report.generated_at.strftime("%H%M%S")
+    path = reports_dir / (
+        f"{daily_report.report_date.isoformat()}-{timestamp}-quant-intel-brief.html"
+    )
     path.write_text(html, encoding="utf-8")
     return path
 

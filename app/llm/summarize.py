@@ -29,7 +29,7 @@ def summarize_ranked_event(
     try:
         raw_summary = client.complete_json(messages)
         summary = EventSummary.model_validate(raw_summary)
-        _validate_grounding(summary, evidence)
+        _validate_grounding(summary, evidence, cluster)
         _validate_non_advisory(summary)
     except (LlmClientError, SummaryValidationError, ValueError) as exc:
         return SummaryResult(
@@ -63,9 +63,16 @@ def _insufficient_evidence_result(ranked_item: RankedItem, cluster: Cluster) -> 
     summary = EventSummary(
         event_id=cluster.id,
         headline="Insufficient source evidence",
+        headline_zh="来源证据不足",
         factual_summary="No source records were available for this ranked event.",
+        factual_summary_zh="当前没有可用于解释该事件的来源记录。",
         market_relevance="Insufficient evidence to assess market relevance.",
+        market_relevance_zh="证据不足，暂时无法判断其市场重要性。",
         uncertainty="No source evidence was provided.",
+        what_to_watch=["Wait for a cited source record before drawing conclusions."],
+        what_to_watch_zh=["等待出现可引用的来源后再作判断。"],
+        source_credibility="low",
+        source_credibility_reason="No source evidence was available.",
         source_ids=[],
         source_urls=[],
         tickers=cluster.tickers,
@@ -82,7 +89,13 @@ def _insufficient_evidence_result(ranked_item: RankedItem, cluster: Cluster) -> 
     )
 
 
-def _validate_grounding(summary: EventSummary, evidence: list[EventEvidence]) -> None:
+def _validate_grounding(
+    summary: EventSummary,
+    evidence: list[EventEvidence],
+    cluster: Cluster,
+) -> None:
+    if summary.event_id != cluster.id:
+        raise SummaryValidationError("Summary event ID does not match the ranked event.")
     allowed_ids = {item.source_id for item in evidence}
     allowed_urls = {item.url for item in evidence}
     if not set(summary.source_ids) <= allowed_ids:

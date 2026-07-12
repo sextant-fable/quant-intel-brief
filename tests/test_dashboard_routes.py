@@ -13,7 +13,14 @@ from sqlmodel import Session, select
 from app.collectors.base import CollectorPersistenceSummary, CollectorStatus
 from app.core.config import Settings
 from app.core.timezones import UTC
-from app.db.models import ContentItem, PremiumSourceNote, Report, ReportSection, SourceStatus
+from app.db.models import (
+    ContentItem,
+    PremiumSourceNote,
+    Report,
+    ReportEventRecord,
+    ReportSection,
+    SourceStatus,
+)
 from app.db.session import create_db_engine
 from app.jobs.collect_once import CollectOnceResult
 from app.jobs.generate_ai_report import AiReportGenerationResult
@@ -44,7 +51,8 @@ def test_empty_database_dashboard_routes_render() -> None:
     sources = client.get("/sources")
 
     assert today.status_code == 200
-    assert "No local content items yet." in today.text
+    assert "No structured Top 10 yet." in today.text
+    assert "Pre-Market Brief" in today.text
     assert "built-in method" not in today.text
     assert feed.status_code == 200
     assert "No local content items match the current filters." in feed.text
@@ -158,6 +166,138 @@ def test_report_archive_and_detail_render_local_reports() -> None:
     assert "Macro/Fed" in detail.text
     assert "FOMC path update." in detail.text
     assert missing.status_code == 404
+
+
+def test_dashboard_feed_and_report_render_bilingual_top_ten() -> None:
+    client, session = _client_with_session()
+    with session:
+        session.add(
+            ContentItem(
+                id="content-1",
+                source_name="newsapi",
+                source_item_id="market-1",
+                url="https://example.test/market-1",
+                title="SPY options volatility rises before CPI",
+                summary="A compact source summary.",
+                tickers=["SPY"],
+                assets=["etf", "options"],
+            )
+        )
+        session.add(
+            Report(
+                id="report-structured",
+                report_date=datetime(2026, 7, 8, 12, 0, tzinfo=UTC),
+                title="Pre-Market Brief",
+                status="draft",
+                source_coverage_note="1 summarized event included.",
+            )
+        )
+        session.add(
+            ReportEventRecord(
+                report_id="report-structured",
+                section_key="etf_options",
+                position=1,
+                event_id="event-1",
+                ranked_item_id="ranked-1",
+                score=91.2,
+                headline="SPY options volatility rises before CPI",
+                headline_zh="CPI 公布前 SPY 期权波动率上升",
+                factual_summary="Options metadata shows higher implied volatility.",
+                factual_summary_zh="期权元数据显示隐含波动率有所上升。",
+                market_relevance="This can affect short-term ETF risk monitoring.",
+                market_relevance_zh="这可能影响短期 ETF 风险监测。",
+                uncertainty="Only one source was available.",
+                what_to_watch=["Watch the CPI release and options skew."],
+                what_to_watch_zh=["关注 CPI 数据和期权偏斜。"],
+                source_credibility="medium",
+                source_credibility_reason="One cited market source was available.",
+                source_ids=["content-1"],
+                source_urls=["https://example.test/market-1"],
+                tickers=["SPY"],
+                assets=["etf", "options"],
+                quant_topics=["volatility"],
+            )
+        )
+        session.commit()
+
+    today = client.get("/dashboard/today")
+    feed = client.get("/feed")
+    detail = client.get("/reports/report-structured")
+
+    assert today.status_code == 200
+    assert "Top 10 Today" in today.text
+    assert "CPI 公布前 SPY 期权波动率上升" in today.text
+    assert "Watch next" in today.text
+    assert feed.status_code == 200
+    assert "TOP 10 EXPLAINED" in feed.text
+    assert "这可能影响短期 ETF 风险监测" in feed.text
+    assert detail.status_code == 200
+    assert "Sources & confidence" in detail.text
+
+
+def test_refresh_brief_uses_only_configured_sources_and_injected_runners(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "LLM_API_KEY=test-key\nSEC_USER_AGENT=\nRSS_FEED_URLS=\nFRED_API_KEY=fred-key\n",
+        encoding="utf-8",
+    )
+    captured: dict[str, Any] = {}
+
+    async def fake_collect_once(
+        session: Session,
+        *,
+        settings: Settings | None = None,
+        sources: Any = None,
+        collectors: Any = None,
+    ) -> CollectOnceResult:
+        captured["sources"] = tuple(sources or ())
+        return CollectOnceResult(requested_sources=tuple(sources or ()), summaries=())
+
+    def fake_generate(
+        session: Session,
+        *,
+        settings: Settings,
+        **_: Any,
+    ) -> AiReportGenerationResult:
+        assert settings.llm_api_key is not None
+        captured["llm_key"] = settings.llm_api_key.get_secret_value()
+        report = Report(
+            id="refreshed-report",
+            report_date=datetime(2026, 7, 8, 12, 0, tzinfo=UTC),
+            title="Refreshed Report",
+        )
+        session.add(report)
+        session.commit()
+        return AiReportGenerationResult(
+            report=DailyRunResult(
+                report_id=report.id,
+                status="draft",
+                collector_count=0,
+                source_failure_count=0,
+                html_path=None,
+                delivery_status=None,
+                source_coverage_note="No ranked summaries were available.",
+            ),
+            source_item_count=0,
+            ranked_event_count=0,
+            successful_summary_count=0,
+            failed_summary_count=0,
+        )
+
+    monkeypatch.setattr("app.web.routes.collect_once", fake_collect_once)
+    monkeypatch.setattr("app.web.routes.generate_ai_report_from_local_content", fake_generate)
+    client, session = _client_with_session(env_path=env_path)
+    session.close()
+
+    response = client.post("/dashboard/refresh")
+
+    assert response.status_code == 200
+    assert captured["sources"] == ("arxiv", "github", "fred", "gdelt", "stackexchange")
+    assert captured["llm_key"] == "test-key"
+    assert "Brief refreshed from 5 configured sources" in response.text
 
 
 def test_static_assets_are_served_locally() -> None:

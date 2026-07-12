@@ -7,10 +7,15 @@ from datetime import datetime, timedelta
 
 from sqlmodel import Session, select
 
-from app.collectors.base import CollectedItem, CollectorRunResult, CollectorStatus
+from app.collectors.base import (
+    CollectedItem,
+    CollectorRunResult,
+    CollectorStatus,
+    persist_collector_result,
+)
 from app.core.config import get_settings
 from app.core.timezones import ensure_utc, utc_now
-from app.db.models import ContentItem, DeliveryLog, Report, ReportSection
+from app.db.models import ContentItem, DeliveryLog, Report, ReportEventRecord, ReportSection
 from app.db.session import create_db_engine, init_db
 from app.jobs.run_daily import run_daily
 from app.llm.schemas import EventSummary, SummaryResult
@@ -31,10 +36,11 @@ def seed_demo(session: Session, *, now: datetime | None = None) -> DemoSeedResul
     """Seed deterministic local demo data without external API calls."""
     seed_time = ensure_utc(now or utc_now())
     _delete_existing_demo_report(session)
+    for collector_result in _collector_results(seed_time):
+        persist_collector_result(session, collector_result)
     result = run_daily(
         session,
-        collector_results=_collector_results(seed_time),
-        summary_results=_summary_results(seed_time),
+        summary_results=_summary_results(session),
         report_date=seed_time.date(),
         report_title=DEMO_REPORT_TITLE,
     )
@@ -148,7 +154,7 @@ def _demo_items(seed_time: datetime) -> list[CollectedItem]:
     ]
 
 
-def _summary_results(seed_time: datetime) -> list[SummaryResult]:
+def _summary_results(session: Session) -> list[SummaryResult]:
     summary_specs = [
         (
             "demo-fed",
@@ -226,10 +232,17 @@ def _summary_results(seed_time: datetime) -> list[SummaryResult]:
             summary=EventSummary(
                 event_id=event_id,
                 headline=headline,
+                headline_zh=_demo_translation(event_id, "headline"),
                 factual_summary=factual_summary,
+                factual_summary_zh=_demo_translation(event_id, "summary"),
                 market_relevance=market_relevance,
+                market_relevance_zh=_demo_translation(event_id, "relevance"),
                 uncertainty=uncertainty,
-                source_ids=[f"demo-source-{index}"],
+                what_to_watch=["Review the next cited update from this source."],
+                what_to_watch_zh=["关注该来源下一次有引用依据的更新。"],
+                source_credibility="medium",
+                source_credibility_reason="This is deterministic local demo metadata.",
+                source_ids=[_content_id_for_url(session, source_urls[0])],
                 source_urls=source_urls,
                 tickers=tickers,
                 assets=assets,
@@ -248,6 +261,47 @@ def _summary_results(seed_time: datetime) -> list[SummaryResult]:
             topics,
         ) in enumerate(summary_specs, start=1)
     ]
+
+
+def _content_id_for_url(session: Session, url: str) -> str:
+    item = session.exec(select(ContentItem).where(ContentItem.url == url)).one()
+    return item.id
+
+
+def _demo_translation(event_id: str, field: str) -> str:
+    translations = {
+        "demo-fed": {
+            "headline": "美联储路径的不确定性仍是重要宏观变量",
+            "summary": "模拟数据表明，通胀争论仍在影响市场对利率路径的判断。",
+            "relevance": "利率预期会影响因子、久期和波动率策略。",
+        },
+        "demo-options": {
+            "headline": "CPI 公布前 SPY 期权偏斜上升",
+            "summary": "模拟市场数据反映 SPY 隐含波动率和下行保护需求上升。",
+            "relevance": "期权偏斜可帮助观察 ETF 风险情绪。",
+        },
+        "demo-sec": {
+            "headline": "NVDA 文件显示数据中心收入信号",
+            "summary": "模拟 SEC 元数据突出显示了收入和利润率相关信息。",
+            "relevance": "公司文件是跟踪基本面事件的重要来源。",
+        },
+        "demo-research": {
+            "headline": "日内因子衰减研究进入观察清单",
+            "summary": "模拟 arXiv 元数据介绍了因子衰减和市场微观结构研究。",
+            "relevance": "该研究可用于决定模型复核和回测优先级。",
+        },
+        "demo-github": {
+            "headline": "回测引擎新增滑点建模",
+            "summary": "模拟 GitHub 元数据显示一个回测项目加入了滑点模型。",
+            "relevance": "开发活动可能揭示系统化研究工具的变化。",
+        },
+        "demo-community": {
+            "headline": "社区开始关注波动率状态过滤器",
+            "summary": "模拟社区元数据显示，波动率过滤和回撤控制讨论升温。",
+            "relevance": "社区热度只能作为需要其他来源验证的弱信号。",
+        },
+    }
+    return translations[event_id][field]
 
 
 def _apply_demo_tags(session: Session) -> None:
@@ -273,6 +327,9 @@ def _apply_demo_tags(session: Session) -> None:
 def _delete_existing_demo_report(session: Session) -> None:
     reports = list(session.exec(select(Report).where(Report.title == DEMO_REPORT_TITLE)).all())
     report_ids = [report.id for report in reports]
+    for event in session.exec(select(ReportEventRecord)).all():
+        if event.report_id in report_ids:
+            session.delete(event)
     for section in session.exec(select(ReportSection)).all():
         if section.report_id in report_ids:
             session.delete(section)

@@ -127,6 +127,18 @@ http://127.0.0.1:8001/reports
 
 Use `Generate AI Report` to summarize top-ranked local content with the configured OpenAI-compatible provider. This is a user-triggered LLM call. It does not send email, start the scheduler, bypass paywalls, or process premium full text.
 
+New reports contain up to 10 ranked events. English is primary; concise Simplified Chinese translations are included for the headline, factual takeaway, market relevance, and watch points. Existing reports created before this format remain readable as legacy reports.
+
+## One-Click Brief Refresh
+
+Open the Today page and use `Refresh Brief`:
+
+```text
+http://127.0.0.1:8000/dashboard/today
+```
+
+This explicit action selects only sources with the minimum local configuration, runs them once, and generates a new Top 10 report from local content. Public arXiv, GitHub, GDELT, and Stack Exchange adapters may run without keys; credential-gated sources run only when their local credentials are present. The action does not send email or enable automatic scheduling.
+
 Useful local `.env` settings:
 
 ```bash

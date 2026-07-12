@@ -78,11 +78,18 @@ def _summary_payload() -> dict[str, Any]:
     return {
         "event_id": "event-1",
         "headline": "ETF volatility monitoring drew attention",
+        "headline_zh": "ETF 波动率监测受到关注",
         "factual_summary": (
             "The provided source says ETF options desks monitored implied volatility."
         ),
+        "factual_summary_zh": "来源显示，ETF 期权交易台正在关注隐含波动率。",
         "market_relevance": "This is relevant as a volatility and ETF market-structure signal.",
+        "market_relevance_zh": "这可作为 ETF 波动率和市场结构的观察信号。",
         "uncertainty": "Only one source record was provided.",
+        "what_to_watch": ["Watch for corroboration from another market source."],
+        "what_to_watch_zh": ["关注是否有其他市场来源提供佐证。"],
+        "source_credibility": "medium",
+        "source_credibility_reason": "Only one market-news source was provided.",
         "source_ids": ["content-1"],
         "source_urls": ["https://example.test/etf-vol"],
         "tickers": ["SPY"],
@@ -109,6 +116,7 @@ def test_prompt_construction_includes_evidence_and_anti_hallucination_rules() ->
     assert payload["event"]["event_id"] == "event-1"
     assert payload["evidence"][0]["source_id"] == "content-1"
     assert any("Do not add prices" in rule for rule in payload["rules"])
+    assert "plain English" in messages[0]["content"]
     assert "properties" in payload["required_schema"]
 
 
@@ -166,11 +174,19 @@ def test_anti_hallucination_rejects_unknown_sources_and_advisory_language() -> N
         [_content_item()],
         FakeSummaryClient(payload=advice_payload),
     )
+    wrong_event_result = summarize_ranked_event(
+        _ranked_item(),
+        _cluster(),
+        [_content_item()],
+        FakeSummaryClient(payload=_summary_payload() | {"event_id": "wrong-event"}),
+    )
 
     assert unknown_result.success is False
     assert "source IDs" in (unknown_result.error_message or "")
     assert advice_result.success is False
     assert "advisory" in (advice_result.error_message or "")
+    assert wrong_event_result.success is False
+    assert "event ID" in (wrong_event_result.error_message or "")
 
 
 def test_openai_compatible_client_decodes_mocked_json() -> None:

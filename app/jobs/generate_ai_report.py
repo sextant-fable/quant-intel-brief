@@ -43,7 +43,7 @@ def generate_ai_report_from_local_content(
     report_date: date | None = None,
     reports_dir: Path | None = None,
     max_source_items: int = 120,
-    max_events: int = 8,
+    max_events: int = 10,
 ) -> AiReportGenerationResult:
     """Summarize top-ranked local content into a persisted draft report."""
     items = _recent_content_items(session, limit=max_source_items)
@@ -61,7 +61,7 @@ def generate_ai_report_from_local_content(
         session,
         summary_results=summary_results,
         report_date=report_date,
-        report_title="Quant Intel Brief",
+        report_title="Pre-Market Brief",
         reports_dir=reports_dir,
     )
     return AiReportGenerationResult(

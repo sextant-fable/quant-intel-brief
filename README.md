@@ -1,12 +1,12 @@
 # Quant Intel Brief
 
-Quant Intel Brief is a planned local-first personal intelligence system for quantitative finance, markets, research, developer ecosystems, and platform signals.
+Quant Intel Brief is a local-first personal intelligence system for quantitative finance, markets, research, developer ecosystems, and platform signals.
 
 The project is designed to run on a personal machine first, with local SQLite storage and explicit user-controlled credentials. It is not a hosted multi-user service.
 
 ## Current Phase
 
-Phase 10 local job orchestration, retention cleanup, and optional scheduler boundaries are implemented. The app has metadata-only collectors through Phase 3, Phase 4 storage hygiene, Phase 5 clustering/tagging, Phase 6 ranking, mocked source-grounded LLM summarization, fixture-rendered reports, email preview/dry-run delivery, local dashboard pages, tested local operations jobs, and a manual collect-once command/page for public, official, market API, community, and platform sources.
+Phase 10 is implemented, followed by manual collection, configurable OpenAI-compatible LLMs, a premium reading queue, and an English-first bilingual reporting experience. New reports include a ranked Top 10, concise Chinese translations for key conclusions, watch points, source confidence, and five market sections.
 
 ## Intended Workflow
 
@@ -50,6 +50,7 @@ Available local routes:
 - `GET /status/sources`
 - `GET /settings/public`
 - `GET /dashboard/today`
+- `POST /dashboard/refresh`
 - `GET /feed`
 - `GET /reports`
 - `GET /reports/{report_id}`
@@ -59,7 +60,7 @@ Available local routes:
 - `GET /settings/sources`
 - `POST /settings/sources`
 
-Collectors do not run automatically from the app shell. Dashboard pages read only local database data.
+Collectors do not run automatically. `Refresh Brief` is an explicit user action that runs only credential-ready sources and then generates a new AI report. It does not send email or enable the scheduler.
 
 Run one local empty daily job manually with:
 
@@ -97,7 +98,7 @@ After content is collected, generate a DeepSeek/OpenAI-compatible draft report m
 http://127.0.0.1:8001/reports
 ```
 
-The `Generate AI Report` button summarizes top-ranked local metadata records only. It does not send email or run the scheduler.
+The `Generate AI Report` button summarizes the top 10 ranked local metadata events. English remains primary, while the headline, plain-language takeaway, market relevance, and watch points include concise Simplified Chinese translations. It does not send email or run the scheduler.
 
 Configure source targets and credentials in `.env` or from the local source settings page:
 

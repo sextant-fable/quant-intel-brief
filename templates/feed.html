@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Feed - {{ settings.dashboard_title }}{% endblock %}
+{% block title %}Intelligence Feed - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
 <main class="shell" data-page="feed">
-  <section class="page-heading">
+  <section class="page-heading compact-heading">
     <div>
-      <p class="eyebrow">Normalized items</p>
-      <h1>Feed</h1>
+      <p class="eyebrow">SOURCE-BACKED SIGNALS</p>
+      <h1>Intelligence Feed</h1>
+      <p class="heading-translation">信息流</p>
     </div>
     <p class="timestamp">{{ view.item_count }} item{{ "" if view.item_count == 1 else "s" }}</p>
   </section>
@@ -21,26 +22,59 @@
   </form>
 
   {% if view.filters.errors %}
-    <div class="notice">
+    <div class="notice notice-error">
       {% for error in view.filters.errors %}<p>{{ error }}</p>{% endfor %}
     </div>
   {% endif %}
 
   {% if view.feed_items %}
-    <ul class="item-list">
+    <div class="feed-list">
       {% for item in view.feed_items %}
-      <li>
-        <a class="item-title" href="{{ item.url }}">{{ item.title }}</a>
-        <p class="item-meta">{{ item.source_name }}{% if item.published_at %} | {{ item.published_at }}{% endif %}</p>
-        {% if item.summary %}<p class="item-summary">{{ item.summary }}</p>{% endif %}
-        <p class="tags">
-          {% for ticker in item.tickers %}<span>{{ ticker }}</span>{% endfor %}
-          {% for asset in item.assets %}<span>{{ asset }}</span>{% endfor %}
-          {% for topic in item.quant_topics %}<span>{{ topic }}</span>{% endfor %}
-        </p>
-      </li>
+        <article class="feed-item {% if item.insight %}has-insight{% endif %}">
+          <header>
+            <div class="feed-source-row">
+              <span>{{ item.source_name }}</span>
+              {% if item.publisher %}<span>{{ item.publisher }}</span>{% endif %}
+              {% if item.published_at %}<time data-local-datetime="{{ item.published_at }}">{{ item.published_at }}</time>{% endif %}
+              {% if item.insight %}<strong>TOP 10 EXPLAINED</strong>{% endif %}
+            </div>
+            <h2><a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a></h2>
+          </header>
+
+          {% if item.insight %}
+            <p class="headline-translation" lang="zh-Hans">{{ item.insight.headline_zh }}</p>
+            <div class="feed-insight-grid">
+              <div>
+                <h3>What happened</h3>
+                <p>{{ item.insight.factual_summary }}</p>
+                <p class="translation" lang="zh-Hans">{{ item.insight.factual_summary_zh }}</p>
+              </div>
+              <div>
+                <h3>Why it matters</h3>
+                <p>{{ item.insight.market_relevance }}</p>
+                <p class="translation" lang="zh-Hans">{{ item.insight.market_relevance_zh }}</p>
+              </div>
+            </div>
+            <div class="feed-watch-row">
+              <strong>Watch next</strong>
+              <span>{{ item.insight.what_to_watch|join(" · ") }}</span>
+              <small lang="zh-Hans">{{ item.insight.what_to_watch_zh|join(" · ") }}</small>
+            </div>
+          {% else %}
+            <p class="raw-summary">{{ item.summary or "No public summary was provided by this source." }}</p>
+            <p class="raw-label">Raw source metadata · 尚未进入最新 Top 10 简报</p>
+          {% endif %}
+
+          <footer>
+            <p class="tags">
+              {% for ticker in item.tickers %}<span class="tag-ticker">{{ ticker }}</span>{% endfor %}
+              {% for asset in item.assets %}<span>{{ asset }}</span>{% endfor %}
+              {% for topic in item.quant_topics %}<span>{{ topic }}</span>{% endfor %}
+            </p>
+          </footer>
+        </article>
       {% endfor %}
-    </ul>
+    </div>
   {% else %}
     <p class="empty-state">No local content items match the current filters.</p>
   {% endif %}

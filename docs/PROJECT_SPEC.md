@@ -15,7 +15,7 @@ Local-first personal tool with SQLite storage, explicit user-managed credentials
 - No real email sending in tests.
 - No automated or scheduled email delivery.
 - No production deployment.
-- No dashboard action that triggers external collection, LLM calls, or email sending.
+- No automatic dashboard collection or LLM calls. Post-Phase 10 manual refresh actions must require an explicit click and must never send email.
 - No premium full-text storage or paywall/browser automation.
 
 ## Planned Users
@@ -30,6 +30,13 @@ Local-first personal tool with SQLite storage, explicit user-managed credentials
 - Daily email report.
 - Source status page.
 - Archived report details.
+
+## Post-Phase 10 Experience
+
+- English-first pre-market brief with concise Chinese translations for key conclusions.
+- Ranked Top 10 with what happened, why it matters, affected tickers/assets, watch points, and source confidence.
+- Five market sections: Macro & Fed, ETFs & Options, SEC & Companies, Quant Research, and Community Heat.
+- Source failures remain secondary and appear at the bottom of the Today view.
 
 ## Milestones
 

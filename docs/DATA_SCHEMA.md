@@ -13,6 +13,7 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `RankedItem`: item or cluster with ranking score and explanation.
 - `Report`: generated daily brief.
 - `ReportSection`: grouped report content.
+- `ReportEventRecord`: structured Top 10 event content persisted for dashboard, feed, and report views.
 - `DeliveryLog`: email or notification delivery result.
 
 ## Normalized Item Fields
@@ -139,3 +140,10 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - Manual runs accept injected collector and summary results; default command runs without external calls.
 - Retention cleanup removes expired local rows while preserving the configured history window.
 - Scheduler wiring is optional and disabled unless `ENABLE_SCHEDULER=true`.
+
+## Bilingual Report Event Rules
+
+- New reports persist structured `ReportEventRecord` rows without altering legacy report rows.
+- English fields remain primary. Chinese fields translate only the headline, factual takeaway, market relevance, and watch points.
+- Each event stores rank, market section, affected tickers/assets, uncertainty, source confidence, and paired source IDs/URLs.
+- The dashboard and feed reuse the same persisted event instead of generating unsourced page-specific explanations.

@@ -3,7 +3,7 @@ name = "quant-intel-brief"
 description = "Daily quantitative-finance intelligence brief scaffold."
 
 [agent]
-primary_instructions = "Follow AGENTS.md. Keep this repository in scaffold mode until implementation is requested."
+primary_instructions = "Follow AGENTS.md and PLANS.md. Preserve the local-first, source-grounded implementation boundaries."
 
 [checks]
 lint = "ruff check ."

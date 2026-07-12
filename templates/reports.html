@@ -2,48 +2,38 @@
 {% block title %}Reports - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
 <main class="shell" data-page="reports">
-  <section class="page-heading">
+  <section class="page-heading compact-heading">
     <div>
-      <p class="eyebrow">Local archive</p>
+      <p class="eyebrow">DAILY BRIEF ARCHIVE</p>
       <h1>Reports</h1>
+      <p class="heading-translation">历史报告</p>
     </div>
-    <form action="/reports/generate-ai" method="post">
-      <button type="submit">Generate AI Report</button>
+    <form action="/reports/generate-ai" method="post" data-refresh-brief>
+      <button type="submit">
+        <span>Generate Report</span>
+        <small>生成最新简报</small>
+      </button>
     </form>
   </section>
 
-  {% if view.message %}
-    <p class="notice">{{ view.message }}</p>
-  {% endif %}
-
-  {% if view.error %}
-    <p class="notice notice-error">{{ view.error }}</p>
-  {% endif %}
-
-  <p class="timestamp">{{ view.report_count }} report{{ "" if view.report_count == 1 else "s" }}</p>
+  {% if view.message %}<p class="notice notice-success">{{ view.message }}</p>{% endif %}
+  {% if view.error %}<p class="notice notice-error">{{ view.error }}</p>{% endif %}
 
   {% if view.reports %}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Coverage</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for report in view.reports %}
-          <tr>
-            <td>{{ report.report_date }}</td>
-            <td><a href="/reports/{{ report.id }}">{{ report.title }}</a></td>
-            <td>{{ report.status }}</td>
-            <td>{{ report.source_coverage_note or "" }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="report-archive">
+      {% for report in view.reports %}
+        <article>
+          <div>
+            <p class="report-date">{{ report.report_date }}</p>
+            <h2><a href="/reports/{{ report.id }}">{{ report.title }}</a></h2>
+            {% if report.source_coverage_note %}<p>{{ report.source_coverage_note }}</p>{% endif %}
+          </div>
+          <div class="archive-meta">
+            <span>{{ report.status }}</span>
+            <time data-local-datetime="{{ report.created_at }}">{{ report.created_at }}</time>
+          </div>
+        </article>
+      {% endfor %}
     </div>
   {% else %}
     <p class="empty-state">No local reports have been generated yet.</p>

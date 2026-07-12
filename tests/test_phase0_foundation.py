@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from io import StringIO
 
 from fastapi.testclient import TestClient
@@ -10,7 +11,7 @@ from sqlmodel import Session, SQLModel, select
 
 from app.core.config import Settings
 from app.core.logging import RedactingFilter, redact_text
-from app.core.timezones import UTC, ensure_utc, to_timezone, utc_now
+from app.core.timezones import UTC, ensure_utc, next_regular_market_open, to_timezone, utc_now
 from app.db.models import ContentItem, Source
 from app.db.session import create_db_engine, init_db
 from app.main import create_app
@@ -89,6 +90,14 @@ def test_timezone_helpers_return_aware_datetimes() -> None:
 
     assert now.tzinfo is UTC
     assert ensure_utc(converted).tzinfo is UTC
+
+
+def test_next_regular_market_open_skips_weekend() -> None:
+    friday_after_close = datetime(2026, 7, 10, 21, 0, tzinfo=UTC)
+
+    next_open = next_regular_market_open(friday_after_close)
+
+    assert next_open == datetime(2026, 7, 13, 13, 30, tzinfo=UTC)
 
 
 def test_logging_redacts_secret_patterns_and_values() -> None:

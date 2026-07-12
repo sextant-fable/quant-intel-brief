@@ -104,8 +104,17 @@ def build_report_email(
 
 def _plain_text_preview(report: DailyReport) -> str:
     lines = [report.title, report.report_date.isoformat(), report.source_coverage_note, ""]
+    lines.extend(["Top 10 Today", "今日重点"])
+    for position, event in enumerate(report.top_events, start=1):
+        lines.append(f"{position}. {event.headline}")
+        lines.append(f"   {event.headline_zh}")
+        lines.append(f"   What happened: {event.factual_summary}")
+        lines.append(f"   Why it matters: {event.market_relevance}")
+        lines.append(f"   Watch next: {'; '.join(event.what_to_watch)}")
+        lines.append(f"   Sources: {', '.join(event.source_urls)}")
+    lines.append("")
     for section in report.sections:
-        lines.append(section.title)
+        lines.append(f"{section.title} / {section.title_zh}")
         if not section.events:
             lines.append("No qualifying summarized events.")
             lines.append("")

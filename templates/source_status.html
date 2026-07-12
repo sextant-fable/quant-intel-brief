@@ -2,33 +2,29 @@
 {% block title %}Sources - {{ settings.dashboard_title }}{% endblock %}
 {% block body %}
 <main class="shell" data-page="source-status">
-  <section class="page-heading">
+  <section class="page-heading compact-heading">
     <div>
-      <p class="eyebrow">Collectors</p>
-      <h1>Sources</h1>
+      <p class="eyebrow">COLLECTION HEALTH</p>
+      <h1>Source Status</h1>
+      <p class="heading-translation">数据源状态</p>
     </div>
-    <p class="timestamp">{{ view.failure_count }} failure{{ "" if view.failure_count == 1 else "s" }}</p>
+    <p class="timestamp">{{ view.failure_count }} need attention</p>
   </section>
 
   {% if view.statuses %}
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Source</th>
-            <th>Status</th>
-            <th>Message</th>
-            <th>Last Checked</th>
-          </tr>
+          <tr><th>Source</th><th>Status</th><th>Last result</th><th>Checked</th></tr>
         </thead>
         <tbody>
           {% for status in view.statuses %}
-          <tr>
-            <td>{{ status.source_name }}</td>
-            <td><span class="status {% if status.is_failure %}status-failed{% else %}status-ok{% endif %}">{{ status.status }}</span></td>
-            <td>{{ status.message }}</td>
-            <td>{{ status.last_checked_at }}</td>
-          </tr>
+            <tr>
+              <td><strong>{{ status.source_name }}</strong></td>
+              <td><span class="status {% if status.is_failure %}status-failed{% else %}status-ok{% endif %}">{{ status.status }}</span></td>
+              <td>{{ status.message }}</td>
+              <td data-local-datetime="{{ status.last_checked_at }}">{{ status.last_checked_at }}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>

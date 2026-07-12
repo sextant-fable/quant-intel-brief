@@ -12,6 +12,10 @@ Prompt templates and structured output requirements live in `app/llm/prompts.py`
 - Do not invent tickers, dates, authors, prices, filings, model results, or causal explanations.
 - If evidence is missing, return an explicit unknown or insufficient-evidence field.
 - Include source IDs or URLs in report-ready outputs.
+- Use plain English as the primary language and avoid unexplained specialist jargon.
+- Translate only key conclusions into concise Simplified Chinese; do not replace the English analysis.
+- Produce one to three evidence-grounded watch points in matching English and Chinese lists.
+- Rate source confidence as high, medium, or low based on source type and corroboration, without treating confidence as proof.
 
 ## Planned Prompt Families
 
@@ -31,3 +35,4 @@ Prompt templates and structured output requirements live in `app/llm/prompts.py`
 - Summaries must cite only provided source IDs and URLs.
 - Missing evidence returns an explicit insufficient-evidence summary without calling the LLM.
 - Unknown source citations or advisory language fail validation and preserve ranked-event context for manual review.
+- Mismatched event IDs, source ID/URL pairs, or English/Chinese watch lists fail validation.

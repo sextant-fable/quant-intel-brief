@@ -4,61 +4,74 @@
     <meta charset="utf-8">
     <title>{{ report.title }}</title>
   </head>
-  <body style="margin:0;background:#f5f7fa;color:#20242a;font-family:Arial,Helvetica,sans-serif;">
+  <body style="margin:0;background:#f4f6f8;color:#17212b;font-family:Arial,Helvetica,sans-serif;">
     <main data-email-template="daily-report" style="max-width:760px;margin:0 auto;padding:24px;">
-      <header style="padding:18px 0 20px;border-bottom:1px solid #d8dee8;">
-        <p style="margin:0 0 8px;font-size:13px;color:#657085;">{{ report.report_date.isoformat() }}</p>
-        <h1 style="margin:0;font-size:28px;line-height:1.2;color:#111827;">{{ report.title }}</h1>
-        <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#4b5563;">
-          {{ report.source_coverage_note }}
-        </p>
+      <header style="padding:20px 0 22px;border-bottom:3px solid #17212b;">
+        <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#2f6f5e;">DAILY MARKET INTELLIGENCE · {{ report.report_date.isoformat() }}</p>
+        <h1 style="margin:0;font-size:30px;line-height:1.15;color:#101820;">Pre-Market Brief</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#53616e;">今日盘前简报</p>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#53616e;">{{ report.source_coverage_note }}</p>
       </header>
 
-      {% for section in report.sections %}
-      <section data-section="{{ section.key }}" style="padding:22px 0;border-bottom:1px solid #e4e9f0;">
-        <h2 style="margin:0 0 14px;font-size:18px;line-height:1.3;color:#1f2937;">
-          {{ section.title }}
-        </h2>
+      <section style="padding:24px 0 8px;">
+        <p style="margin:0 0 5px;font-size:11px;font-weight:700;letter-spacing:.08em;color:#687684;">RANKED BY MARKET RELEVANCE</p>
+        <h2 style="margin:0 0 4px;font-size:21px;color:#101820;">Top 10 Today</h2>
+        <p style="margin:0 0 18px;font-size:14px;color:#687684;">今日重点</p>
 
-        {% if section.events %}
-          {% for event in section.events %}
-          <article style="margin:0 0 18px;padding:16px;background:#ffffff;border:1px solid #dfe5ee;border-radius:6px;">
-            <p style="margin:0 0 8px;font-size:12px;color:#6b7280;">
-              Score {{ "%.1f"|format(event.score) }}
-              {% if event.tickers %} | Tickers: {{ event.tickers|join(", ") }}{% endif %}
-              {% if event.assets %} | Assets: {{ event.assets|join(", ") }}{% endif %}
-            </p>
-            <h3 style="margin:0 0 10px;font-size:16px;line-height:1.35;color:#111827;">
-              {{ event.headline }}
-            </h3>
-            <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#374151;">
-              {{ event.factual_summary }}
-            </p>
-            <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#374151;">
-              <strong>Why it matters:</strong> {{ event.market_relevance }}
-            </p>
-            <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#4b5563;">
-              <strong>Uncertainty:</strong> {{ event.uncertainty }}
-            </p>
-            <p style="margin:0;font-size:12px;line-height:1.5;color:#4b5563;">
-              Sources:
-              {% for url in event.source_urls %}
-                {% set source_label = event.source_ids[loop.index0] if loop.index0 < event.source_ids|length else "source" %}
-                <a href="{{ url }}" style="color:#1d4ed8;text-decoration:underline;">{{ source_label }}</a>{% if not loop.last %}, {% endif %}
-              {% endfor %}
-            </p>
-          </article>
+        {% if report.top_events %}
+          {% for event in report.top_events %}
+            <article style="margin:0 0 14px;padding:18px;background:#ffffff;border:1px solid #d9e0e5;border-left:4px solid #2f6f5e;border-radius:4px;">
+              <p style="margin:0 0 8px;font-size:11px;color:#687684;">#{{ loop.index }} · Score {{ "%.1f"|format(event.score) }} · {{ event.source_credibility|upper }} confidence</p>
+              <h3 style="margin:0 0 5px;font-size:17px;line-height:1.35;color:#101820;">{{ event.headline }}</h3>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:#2f6f5e;">{{ event.headline_zh }}</p>
+
+              <p style="margin:0 0 5px;font-size:11px;font-weight:700;color:#687684;">WHAT HAPPENED</p>
+              <p style="margin:0 0 6px;font-size:14px;line-height:1.55;color:#283541;">{{ event.factual_summary }}</p>
+              <p style="margin:0 0 14px;font-size:13px;line-height:1.55;color:#53616e;">{{ event.factual_summary_zh }}</p>
+
+              <p style="margin:0 0 5px;font-size:11px;font-weight:700;color:#687684;">WHY IT MATTERS</p>
+              <p style="margin:0 0 6px;font-size:14px;line-height:1.55;color:#283541;">{{ event.market_relevance }}</p>
+              <p style="margin:0 0 14px;font-size:13px;line-height:1.55;color:#53616e;">{{ event.market_relevance_zh }}</p>
+
+              <p style="margin:0 0 5px;font-size:11px;font-weight:700;color:#687684;">WATCH NEXT</p>
+              <ul style="margin:0 0 14px;padding-left:18px;color:#283541;">
+                {% for point in event.what_to_watch %}
+                  <li style="margin:0 0 5px;font-size:13px;line-height:1.5;">{{ point }}{% if loop.index0 < event.what_to_watch_zh|length %}<br><span style="color:#687684;">{{ event.what_to_watch_zh[loop.index0] }}</span>{% endif %}</li>
+                {% endfor %}
+              </ul>
+
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#687684;">
+                {% if event.tickers %}May affect: {{ event.tickers|join(", ") }} · {% endif %}
+                Sources:
+                {% for url in event.source_urls %}
+                  <a href="{{ url }}" style="color:#175e88;text-decoration:underline;">{{ loop.index }}</a>{% if not loop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+            </article>
           {% endfor %}
         {% else %}
-          <p style="margin:0;font-size:14px;line-height:1.5;color:#6b7280;">
-            No qualifying summarized events for this section.
-          </p>
+          <p style="margin:0;font-size:14px;color:#687684;">No qualifying summarized events were available.</p>
         {% endif %}
       </section>
-      {% endfor %}
 
-      <footer style="padding:18px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">
-        This local brief is for research organization only and is not investment advice.
+      <section style="padding:20px 0;border-top:1px solid #d9e0e5;">
+        <p style="margin:0 0 5px;font-size:11px;font-weight:700;letter-spacing:.08em;color:#687684;">BY MARKET LENS</p>
+        <h2 style="margin:0 0 4px;font-size:20px;color:#101820;">Market Sections</h2>
+        <p style="margin:0 0 16px;font-size:14px;color:#687684;">市场板块</p>
+        {% for section in report.sections %}
+          <div data-section="{{ section.key }}" style="padding:14px 0;border-top:1px solid #e5eaee;">
+            <h3 style="margin:0 0 4px;font-size:15px;color:#101820;">{{ section.title }} <span style="font-weight:400;color:#687684;">{{ section.title_zh }}</span></h3>
+            {% if section.events %}
+              {% for event in section.events %}<p style="margin:7px 0;font-size:13px;line-height:1.45;color:#283541;">{{ event.headline }}<br><span style="color:#687684;">{{ event.headline_zh }}</span></p>{% endfor %}
+            {% else %}
+              <p style="margin:7px 0;font-size:13px;color:#8a96a1;">No qualifying events.</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </section>
+
+      <footer style="padding:18px 0 0;border-top:1px solid #d9e0e5;font-size:11px;line-height:1.5;color:#687684;">
+        Source-grounded research organization only. Not investment advice.
       </footer>
     </main>
   </body>

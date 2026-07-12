@@ -18,6 +18,7 @@ from app.db.models import (
     RankedItem,
     RawItem,
     Report,
+    ReportEventRecord,
     ReportSection,
 )
 
@@ -42,6 +43,7 @@ def cleanup_retention(
 
     old_reports = list(session.exec(select(Report).where(Report.report_date < cutoff)).all())
     old_report_ids = [report.id for report in old_reports]
+    deleted_counts["report_event_records"] = _delete_report_events(session, old_report_ids)
     deleted_counts["report_sections"] = _delete_report_sections(session, old_report_ids)
     deleted_counts["reports"] = _delete_rows(session, old_reports)
 
@@ -101,6 +103,17 @@ def _delete_report_sections(session: Session, report_ids: list[str]) -> int:
         section
         for section in session.exec(select(ReportSection)).all()
         if section.report_id in report_ids
+    ]
+    return _delete_rows(session, rows)
+
+
+def _delete_report_events(session: Session, report_ids: list[str]) -> int:
+    if not report_ids:
+        return 0
+    rows = [
+        event
+        for event in session.exec(select(ReportEventRecord)).all()
+        if event.report_id in report_ids
     ]
     return _delete_rows(session, rows)
 

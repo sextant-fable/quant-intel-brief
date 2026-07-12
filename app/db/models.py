@@ -196,6 +196,37 @@ class ReportSection(SQLModel, table=True):
     source_refs: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
 
+class ReportEventRecord(SQLModel, table=True):
+    """Structured report event used by Top 10 and bilingual dashboard views."""
+
+    __tablename__: ClassVar[str] = "report_event_records"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    report_id: str = Field(foreign_key="reports.id", index=True)
+    section_key: str = Field(index=True)
+    position: int = Field(default=0, index=True)
+    event_id: str = Field(index=True)
+    ranked_item_id: str | None = Field(default=None, index=True)
+    score: float = Field(default=0.0, index=True)
+    headline: str
+    headline_zh: str
+    factual_summary: str
+    factual_summary_zh: str
+    market_relevance: str
+    market_relevance_zh: str
+    uncertainty: str
+    what_to_watch: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    what_to_watch_zh: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    source_credibility: str = Field(default="medium", index=True)
+    source_credibility_reason: str
+    source_ids: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    source_urls: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    tickers: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    assets: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    quant_topics: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
 class DeliveryLog(SQLModel, table=True):
     """Email or notification delivery result."""
 
@@ -257,6 +288,7 @@ __all__ = [
     "RankedItem",
     "RawItem",
     "Report",
+    "ReportEventRecord",
     "ReportSection",
     "PremiumSourceNote",
     "Source",

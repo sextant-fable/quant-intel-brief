@@ -28,9 +28,16 @@ def _summary_result(
         summary=EventSummary(
             event_id=event_id,
             headline=headline,
+            headline_zh=f"{headline} 中文重点",
             factual_summary=f"{headline} was reported by cited sources.",
+            factual_summary_zh="引用来源报告了这一变化。",
             market_relevance="Relevant as an informational market or quant workflow signal.",
+            market_relevance_zh="这是市场或量化工作流中的信息信号。",
             uncertainty="Follow-up source coverage may change the interpretation.",
+            what_to_watch=["Watch for a corroborating source update."],
+            what_to_watch_zh=["关注后续来源是否提供佐证。"],
+            source_credibility="medium",
+            source_credibility_reason="The event has at least one cited source.",
             source_ids=[f"source-{index}" for index, _ in enumerate(urls, start=1)],
             source_urls=urls,
             tickers=tickers or [],
@@ -44,30 +51,39 @@ def test_report_sections_are_ordered_and_classified() -> None:
     report = generate_daily_report(
         [
             _summary_result("market", "Broad market breadth update"),
-            _summary_result("macro", "FOMC inflation path update", assets=["macro"]),
-            _summary_result("etf", "SPY options skew rises", assets=["options"]),
+            _summary_result(
+                "macro",
+                "FOMC inflation path update",
+                assets=["macro"],
+                quant_topics=["risk_model"],
+            ),
+            _summary_result("etf", "SPY options skew rises ahead of CPI", assets=["options"]),
             _summary_result("sec", "Issuer files 10-Q update"),
             _summary_result("research", "New factor model paper", quant_topics=["factor"]),
             _summary_result(
                 "community",
-                "GitHub community library release",
-                quant_topics=["github"],
+                "Community volatility filter discussion",
+                assets=["options"],
+                quant_topics=["volatility"],
             ),
             _summary_result("watch", "NVDA supply chain item", tickers=["NVDA"]),
         ],
         report_date=date(2026, 7, 8),
     )
 
-    assert [section.key for section in report.sections] == [key for key, _ in SECTION_DEFINITIONS]
+    assert [section.key for section in report.sections] == [
+        key for key, _, _ in SECTION_DEFINITIONS
+    ]
 
     by_key = {section.key: section for section in report.sections}
-    assert by_key["market_overview"].events[0].event_id == "market"
+    assert by_key["sec_companies"].events[0].event_id == "market"
     assert by_key["macro_fed"].events[0].event_id == "macro"
     assert by_key["etf_options"].events[0].event_id == "etf"
-    assert by_key["sec_filings"].events[0].event_id == "sec"
-    assert by_key["research"].events[0].event_id == "research"
-    assert by_key["github_community"].events[0].event_id == "community"
-    assert by_key["watchlist"].events[0].event_id == "watch"
+    assert any(event.event_id == "sec" for event in by_key["sec_companies"].events)
+    assert by_key["quant_research"].events[0].event_id == "research"
+    assert by_key["community_heat"].events[0].event_id == "community"
+    assert any(event.event_id == "watch" for event in by_key["sec_companies"].events)
+    assert len(report.top_events) == 7
 
 
 def test_empty_report_renders_without_events() -> None:
@@ -76,9 +92,9 @@ def test_empty_report_renders_without_events() -> None:
     html = render_email_report(report)
 
     assert "No ranked summaries were available" in report.source_coverage_note
-    assert html.count("No qualifying summarized events for this section.") == len(
-        SECTION_DEFINITIONS
-    )
+    assert html.count("No qualifying events.") == len(SECTION_DEFINITIONS)
+    assert "Top 10 Today" in html
+    assert "今日重点" in html
     assert "daily-report" in html
 
 

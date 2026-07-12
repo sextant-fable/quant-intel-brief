@@ -25,7 +25,14 @@ from app.core.source_settings import (
     write_env_updates,
 )
 from app.core.timezones import utc_now
-from app.db.models import ContentItem, PremiumSourceNote, Report, ReportSection, SourceStatus
+from app.db.models import (
+    ContentItem,
+    PremiumSourceNote,
+    Report,
+    ReportEventRecord,
+    ReportSection,
+    SourceStatus,
+)
 from app.jobs.collect_once import SUPPORTED_SOURCES, CollectOnceResult, collect_once
 from app.jobs.generate_ai_report import (
     AiReportGenerationResult,
@@ -311,11 +318,48 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
     @app.get("/dashboard/today", response_class=HTMLResponse, tags=["dashboard"])
     def dashboard_today(request: Request) -> HTMLResponse:
         with Session(app.state.engine) as session:
-            view = build_dashboard_view(
-                items=session.exec(select(ContentItem)).all(),
-                reports=session.exec(select(Report)).all(),
-                statuses=session.exec(select(SourceStatus).order_by(SourceStatus.source_name)).all(),
-            )
+            view = _dashboard_view(session)
+        return templates.TemplateResponse(
+            request,
+            "dashboard_today.html",
+            {"settings": settings, "view": view},
+        )
+
+    @app.post("/dashboard/refresh", response_class=HTMLResponse, tags=["dashboard"])
+    async def refresh_dashboard(request: Request) -> HTMLResponse:
+        """Run configured sources and build a new brief after an explicit click."""
+        collection_result: CollectOnceResult | None = None
+        report_result: AiReportGenerationResult | None = None
+        error: str | None = None
+        _refresh_runtime_source_settings(app, settings)
+        _refresh_runtime_llm_settings(app, settings)
+        selected_sources = _configured_source_names(settings)
+
+        try:
+            with Session(app.state.engine) as session:
+                if selected_sources:
+                    collection_result = await collect_once(
+                        session,
+                        settings=settings,
+                        sources=selected_sources,
+                    )
+                report_result = generate_ai_report_from_local_content(
+                    session,
+                    settings=settings,
+                    reports_dir=_reports_dir(app),
+                )
+                view = _dashboard_view(session)
+        except Exception as exc:
+            error = redact_text(f"Brief refresh failed: {exc}")
+            with Session(app.state.engine) as session:
+                view = _dashboard_view(session)
+
+        view["refresh"] = {
+            "error": error,
+            "source_count": len(selected_sources),
+            "collection": _collect_once_result_view(collection_result),
+            "report": _ai_report_result_view(report_result),
+        }
         return templates.TemplateResponse(
             request,
             "dashboard_today.html",
@@ -340,7 +384,12 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
         )
         with Session(app.state.engine) as session:
             items = session.exec(select(ContentItem)).all()
-        view = build_feed_view(items=filter_content_items(items, filters), filters=filters)
+            report_events = _latest_structured_report_events(session)
+        view = build_feed_view(
+            items=filter_content_items(items, filters),
+            filters=filters,
+            report_events=report_events,
+        )
         return templates.TemplateResponse(
             request,
             "feed.html",
@@ -368,7 +417,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
                 result = generate_ai_report_from_local_content(
                     session,
                     settings=settings,
-                    reports_dir=Path("data/reports"),
+                    reports_dir=_reports_dir(app),
                 )
                 reports_view = build_reports_view(session.exec(select(Report)).all())
             message = (
@@ -399,7 +448,14 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
             sections = session.exec(
                 select(ReportSection).where(ReportSection.report_id == report_id)
             ).all()
-            view = build_report_detail_view(report=report, sections=sections)
+            report_events = session.exec(
+                select(ReportEventRecord).where(ReportEventRecord.report_id == report_id)
+            ).all()
+            view = build_report_detail_view(
+                report=report,
+                sections=sections,
+                report_events=report_events,
+            )
         return templates.TemplateResponse(
             request,
             "report_detail.html",
@@ -419,6 +475,25 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
 def _source_statuses(app: FastAPI) -> list[SourceStatus]:
     with Session(app.state.engine) as session:
         return list(session.exec(select(SourceStatus).order_by(SourceStatus.source_name)).all())
+
+
+def _dashboard_view(session: Session) -> dict[str, Any]:
+    return build_dashboard_view(
+        items=session.exec(select(ContentItem)).all(),
+        reports=session.exec(select(Report)).all(),
+        statuses=session.exec(select(SourceStatus).order_by(SourceStatus.source_name)).all(),
+        report_events=_latest_structured_report_events(session),
+    )
+
+
+def _latest_structured_report_events(session: Session) -> list[ReportEventRecord]:
+    reports = list(session.exec(select(Report).order_by(desc("created_at"))).all())
+    events = list(session.exec(select(ReportEventRecord)).all())
+    for report in reports:
+        report_events = [event for event in events if event.report_id == report.id]
+        if report_events:
+            return report_events
+    return []
 
 
 def _llm_settings_view(
@@ -552,10 +627,56 @@ def _refresh_runtime_llm_settings(app: FastAPI, settings: Settings) -> None:
     settings.llm_provider = saved.provider
     settings.llm_base_url = saved.base_url
     settings.llm_model = saved.model
-    if values.get("LLM_API_KEY"):
-        settings.llm_api_key = SecretStr(values["LLM_API_KEY"])
-    elif values.get("DEEPSEEK_API_KEY"):
-        settings.deepseek_api_key = SecretStr(values["DEEPSEEK_API_KEY"])
+    settings.llm_api_key = SecretStr(values["LLM_API_KEY"]) if values.get("LLM_API_KEY") else None
+    settings.deepseek_api_key = (
+        SecretStr(values["DEEPSEEK_API_KEY"]) if values.get("DEEPSEEK_API_KEY") else None
+    )
+
+
+def _refresh_runtime_source_settings(app: FastAPI, settings: Settings) -> None:
+    saved = load_source_settings(_env_path(app))
+    _apply_runtime_source_settings(app, settings, saved, form={})
+    values = read_env_values(_env_path(app))
+    secret_fields = {
+        "github_token": "GITHUB_TOKEN",
+        "fred_api_key": "FRED_API_KEY",
+        "newsapi_key": "NEWSAPI_KEY",
+        "alphavantage_api_key": "ALPHAVANTAGE_API_KEY",
+        "finnhub_api_key": "FINNHUB_API_KEY",
+        "reddit_access_token": "REDDIT_ACCESS_TOKEN",
+        "youtube_api_key": "YOUTUBE_API_KEY",
+        "x_bearer_token": "X_BEARER_TOKEN",
+        "stackexchange_key": "STACKEXCHANGE_KEY",
+        "quantconnect_user_id": "QUANTCONNECT_USER_ID",
+        "quantconnect_token": "QUANTCONNECT_TOKEN",
+    }
+    for attribute_name, env_key in secret_fields.items():
+        value = values.get(env_key, "")
+        setattr(settings, attribute_name, SecretStr(value) if value else None)
+
+
+def _configured_source_names(settings: Settings) -> tuple[str, ...]:
+    """Select sources that have the minimum configuration for an explicit refresh."""
+    ready = {
+        "rss": bool(settings.rss_feed_urls),
+        "sec_edgar": bool(settings.sec_user_agent),
+        "arxiv": True,
+        "github": True,
+        "fred": settings.fred_api_key is not None,
+        "newsapi": settings.newsapi_key is not None,
+        "gdelt": True,
+        "alphavantage": settings.alphavantage_api_key is not None,
+        "finnhub": settings.finnhub_api_key is not None,
+        "reddit": settings.reddit_access_token is not None and bool(settings.reddit_user_agent),
+        "youtube": settings.youtube_api_key is not None,
+        "x_api": settings.x_bearer_token is not None,
+        "stackexchange": True,
+        "quantconnect": (
+            settings.quantconnect_user_id is not None
+            and settings.quantconnect_token is not None
+        ),
+    }
+    return tuple(source_name for source_name in SUPPORTED_SOURCES if ready[source_name])
 
 
 def _apply_runtime_source_settings(
@@ -599,6 +720,10 @@ def _apply_runtime_source_settings(
 
 def _env_path(app: FastAPI) -> Path:
     return getattr(app.state, "env_file_path", Path(".env"))
+
+
+def _reports_dir(app: FastAPI) -> Path:
+    return getattr(app.state, "reports_dir", Path("data/reports"))
 
 
 def _parse_form(body: bytes) -> dict[str, str]:
