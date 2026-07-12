@@ -92,7 +92,8 @@ def test_empty_report_renders_without_events() -> None:
     html = render_email_report(report)
 
     assert "No ranked summaries were available" in report.source_coverage_note
-    assert html.count("No qualifying events.") == len(SECTION_DEFINITIONS)
+    assert html.count("No qualifying new events.") == len(SECTION_DEFINITIONS)
+    assert html.count("没有符合条件的新事件。") == len(SECTION_DEFINITIONS)
     assert "Top 10 Today" in html
     assert "今日重点" in html
     assert "daily-report" in html

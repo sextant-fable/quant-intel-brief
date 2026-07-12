@@ -108,6 +108,28 @@ def test_feed_filters_local_content_items() -> None:
     assert "Unmatched community item" not in response.text
 
 
+def test_old_stackexchange_items_render_only_in_long_term_research_feed() -> None:
+    client, session = _client_with_session()
+    with session:
+        session.add(
+            ContentItem(
+                source_name="stackexchange",
+                source_item_id="old-question",
+                url="https://quant.stackexchange.test/questions/old",
+                title="Older option pricing research question",
+                published_at=datetime(2020, 1, 1, 12, 0, tzinfo=UTC),
+            )
+        )
+        session.commit()
+
+    response = client.get("/feed")
+
+    assert response.status_code == 200
+    assert "Research Feed" in response.text
+    assert "LONG-TERM RESEARCH" in response.text
+    assert "Older option pricing research question" in response.text
+
+
 def test_source_status_redacts_secret_like_messages_in_json_and_html() -> None:
     client, session = _client_with_session()
     with session:

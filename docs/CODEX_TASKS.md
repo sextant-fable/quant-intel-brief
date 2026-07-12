@@ -46,6 +46,8 @@ Use this document to break future work into safe implementation tasks.
 - [x] Add an English-first bilingual Top 10 pre-market experience.
 - [x] Persist structured report events for Today, Feed, report detail, and email rendering.
 - [x] Add an explicit one-click brief refresh for credential-ready sources.
+- [x] Select daily candidates by publication time with per-source quotas and source-specific freshness windows.
+- [x] Enforce Top 10 source/section diversity and preserve old Stack Exchange items in the Research Feed only.
 
 ## Phase 0 Done Criteria
 

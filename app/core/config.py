@@ -92,6 +92,16 @@ class Settings(BaseSettings):
     enable_premium_browser: bool = False
     premium_rss_feed_urls: str | None = None
 
+    brief_candidate_items_per_source: int = 20
+    brief_news_window_hours: int = 72
+    brief_community_window_hours: int = 72
+    brief_sec_window_days: int = 30
+    brief_arxiv_window_days: int = 30
+    brief_research_window_days: int = 14
+    brief_default_window_days: int = 7
+    brief_top_source_limit: int = 2
+    brief_top_section_limit: int = 3
+
     def public_summary(self) -> dict[str, Any]:
         """Return non-secret settings safe for health and status responses."""
         return {

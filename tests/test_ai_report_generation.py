@@ -64,6 +64,7 @@ def test_generate_ai_report_from_local_content_uses_injected_llm_client(
                 url="https://example.test/spy-options",
                 title="SPY options volatility item",
                 summary="Options desks discussed SPY implied volatility.",
+                published_at=datetime(2026, 7, 8, 10, 30, tzinfo=UTC),
                 fetched_at=datetime(2026, 7, 8, 11, 0, tzinfo=UTC),
             )
         )
@@ -76,6 +77,7 @@ def test_generate_ai_report_from_local_content_uses_injected_llm_client(
             report_date=datetime(2026, 7, 8, tzinfo=UTC).date(),
             reports_dir=tmp_path,
             max_events=1,
+            now=datetime(2026, 7, 8, 12, 0, tzinfo=UTC),
         )
         reports = session.exec(select(Report)).all()
         sections = session.exec(select(ReportSection)).all()

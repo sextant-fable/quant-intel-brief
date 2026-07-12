@@ -9,17 +9,10 @@ from pydantic import BaseModel, Field
 
 from app.core.timezones import utc_now
 from app.llm.schemas import SummaryResult
-
-SECTION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
-    ("macro_fed", "Macro & Fed", "宏观与美联储"),
-    ("etf_options", "ETFs & Options", "ETF 与期权"),
-    ("sec_companies", "SEC & Companies", "SEC 与公司"),
-    ("quant_research", "Quant Research", "量化研究"),
-    ("community_heat", "Community Heat", "社区热度"),
-)
-
-RESEARCH_TOPICS = frozenset(
-    {"arxiv", "backtesting", "factor", "microstructure", "risk_model", "volatility"}
+from app.reports.sections import (
+    SECTION_DEFINITIONS,
+    SECTION_KEYS,
+    section_key_from_signals,
 )
 
 
@@ -87,7 +80,8 @@ def generate_daily_report(
         if event is None:
             skipped += 1
             continue
-        section_events[_section_key_for_event(event)].append(event)
+        section_key = result.section_key if result.section_key in SECTION_KEYS else None
+        section_events[section_key or _section_key_for_event(event)].append(event)
 
     for events in section_events.values():
         events.sort(key=lambda event: (-event.score, event.headline.lower()))
@@ -149,33 +143,12 @@ def _event_from_result(result: SummaryResult) -> ReportEvent | None:
 
 
 def _section_key_for_event(event: ReportEvent) -> str:
-    text = _event_text(event)
-    assets = {asset.lower() for asset in event.assets}
-    topics = {topic.lower() for topic in event.quant_topics}
-
-    if any(term in text for term in ("github", "community", "reddit", "youtube", "open source")):
-        return "community_heat"
-    if any(term in text for term in ("sec", "filing", "10-k", "10-q", "8-k")):
-        return "sec_companies"
-    if assets & {"etf", "options"} or any(term in text for term in ("etf", "option")):
-        return "etf_options"
-    if "macro" in assets or any(term in text for term in ("fed", "fomc", "fred", "cpi")):
-        return "macro_fed"
-    if topics & RESEARCH_TOPICS or any(term in text for term in ("research", "paper", "arxiv")):
-        return "quant_research"
-    return "sec_companies"
-
-
-def _event_text(event: ReportEvent) -> str:
-    return " ".join(
-        [
-            event.headline,
-            event.factual_summary,
-            event.market_relevance,
-            " ".join(event.assets),
-            " ".join(event.quant_topics),
-        ]
-    ).lower()
+    return section_key_from_signals(
+        title=event.headline,
+        assets=event.assets,
+        quant_topics=event.quant_topics,
+        extra_text=" ".join([event.factual_summary, event.market_relevance]),
+    )
 
 
 def _coverage_note(included: int, skipped: int, total: int) -> str:

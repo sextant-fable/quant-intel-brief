@@ -9,6 +9,7 @@ from typing import Any
 from app.core.logging import redact_text
 from app.core.timezones import next_regular_market_open, utc_now
 from app.db.models import ContentItem, Report, ReportEventRecord, ReportSection, SourceStatus
+from app.ranking.selection import is_long_term_research_item
 from app.web.filters import DashboardFilters
 
 
@@ -62,14 +63,27 @@ def build_feed_view(
 ) -> dict[str, Any]:
     """Build feed page payload."""
     insights = _insights_by_source_id(report_events)
-    item_views = [
-        _content_item_view(item, insight=insights.get(item.id)) for item in _sort_items(items)
-    ]
+    item_views: list[dict[str, Any]] = []
+    for item in _sort_items(items):
+        is_research = is_long_term_research_item(item)
+        item_views.append(
+            _content_item_view(
+                item,
+                insight=insights.get(item.id),
+                feed_scope="research" if is_research else "daily",
+            )
+        )
+    daily_items = [item for item in item_views if item["feed_scope"] == "daily"]
+    research_items = [item for item in item_views if item["feed_scope"] == "research"]
     return {
         "filters": filters.model_dump(),
         "has_active_filters": filters.has_active_filters,
         "feed_items": item_views,
+        "daily_items": daily_items,
+        "research_items": research_items,
         "item_count": len(item_views),
+        "daily_item_count": len(daily_items),
+        "research_item_count": len(research_items),
     }
 
 
@@ -115,6 +129,7 @@ def _content_item_view(
     item: ContentItem,
     *,
     insight: dict[str, Any] | None = None,
+    feed_scope: str = "daily",
 ) -> dict[str, Any]:
     item_time = item.published_at or item.fetched_at
     return {
@@ -129,6 +144,7 @@ def _content_item_view(
         "quant_topics": item.quant_topics,
         "summary": item.summary or item.excerpt,
         "insight": insight,
+        "feed_scope": feed_scope,
     }
 
 

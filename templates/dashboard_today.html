@@ -154,12 +154,12 @@
 
     <div class="section-summaries">
       {% for section in view.brief.market_sections %}
-        {% if section.events %}
-          <section id="section-{{ section.key }}">
-            <header>
-              <h3>{{ section.title }}</h3>
-              <span>{{ section.title_zh }}</span>
-            </header>
+        <section id="section-{{ section.key }}">
+          <header>
+            <h3>{{ section.title }}</h3>
+            <span>{{ section.title_zh }}</span>
+          </header>
+          {% if section.events %}
             <ul>
               {% for event in section.events %}
                 <li>
@@ -168,8 +168,10 @@
                 </li>
               {% endfor %}
             </ul>
-          </section>
-        {% endif %}
+          {% else %}
+            <p class="section-empty">No qualifying new events. <span lang="zh-Hans">没有符合条件的新事件。</span></p>
+          {% endif %}
+        </section>
       {% endfor %}
     </div>
   </section>

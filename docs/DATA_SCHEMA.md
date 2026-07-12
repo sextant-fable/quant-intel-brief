@@ -107,9 +107,17 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 ## Phase 6 Ranking Rules
 
 - `RankedItem` stores score, component dictionary, explanation, and ranking timestamp.
-- Score components include source credibility, recency, coverage, asset importance, research signal, and capped community heat.
+- Score components include source credibility, publication-time recency, cross-source corroboration, asset importance, research signal, and capped community heat.
 - Ranking explanations must remain informational and non-advisory.
 - Ranking is deterministic for a fixed fixture set and does not call an LLM.
+
+## Daily Brief Selection Rules
+
+- Daily candidates require a real `published_at`; `fetched_at` never makes an old item current.
+- Candidate extraction is capped per source before the global pool is assembled.
+- News and community items use a 72-hour default window; SEC and arXiv use explicit longer windows.
+- Old Stack Exchange questions remain available in the long-term Research Feed but are excluded from the daily brief.
+- Top 10 selection allows at most two events per source and three per market section, and attempts to cover all five sections before filling remaining positions by score.
 
 ## Phase 7 Summary Rules
 

@@ -55,6 +55,7 @@ class SummaryResult(BaseModel):
     ranked_item_id: str | None = None
     event_id: str | None = None
     ranked_score: float | None = None
+    section_key: str | None = None
     summary: EventSummary | None = None
     error_message: str | None = None
 

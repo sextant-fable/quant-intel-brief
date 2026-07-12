@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 
 from app.core.timezones import ensure_utc, utc_now
@@ -24,9 +25,17 @@ SOURCE_WEIGHTS = {
     "youtube": 0.35,
     "x_api": 0.3,
 }
+FINANCE_NEWS_MCP_WEIGHTS = {
+    "bloomberg": 0.92,
+    "cnbc": 0.82,
+    "ft": 0.92,
+    "marketwatch": 0.78,
+    "seekingalpha": 0.62,
+    "wsj": 0.92,
+}
 IMPORTANT_ASSETS = frozenset({"macro", "options", "etf", "equity"})
 RESEARCH_TOPICS = frozenset({"backtesting", "factor", "microstructure", "risk_model", "volatility"})
-COMMUNITY_HEAT_COMPONENT_CAP = 0.15
+COMMUNITY_HEAT_COMPONENT_CAP = 0.1
 
 
 def rank_clusters(
@@ -34,22 +43,34 @@ def rank_clusters(
     *,
     now: datetime | None = None,
     community_metrics: dict[str, float] | None = None,
+    published_at_by_cluster: Mapping[str, datetime] | None = None,
 ) -> list[RankedItem]:
     """Rank clusters using explainable deterministic score components."""
     ranked_at = ensure_utc(now or utc_now())
     metrics = community_metrics or {}
+    publication_times = published_at_by_cluster or {}
     ranked_items = [
-        _rank_cluster(cluster, ranked_at=ranked_at, community_heat=metrics.get(cluster.id, 0.0))
+        _rank_cluster(
+            cluster,
+            ranked_at=ranked_at,
+            published_at=publication_times.get(cluster.id),
+            community_heat=metrics.get(cluster.id, 0.0),
+        )
         for cluster in prefilter_clusters(clusters)
     ]
     return sorted(ranked_items, key=lambda item: (-item.score, item.cluster_id or ""))
 
 
-def _rank_cluster(cluster: Cluster, ranked_at: datetime, community_heat: float) -> RankedItem:
+def _rank_cluster(
+    cluster: Cluster,
+    ranked_at: datetime,
+    published_at: datetime | None,
+    community_heat: float,
+) -> RankedItem:
     components = {
         "source_credibility": _source_credibility(cluster),
-        "recency": _recency(cluster, ranked_at),
-        "coverage": _coverage(cluster),
+        "recency": _recency(published_at or cluster.created_at, ranked_at),
+        "cross_source_corroboration": _cross_source_corroboration(cluster),
         "asset_importance": _asset_importance(cluster),
         "research_signal": _research_signal(cluster),
         "community_heat": _community_heat(cluster, community_heat),
@@ -67,19 +88,33 @@ def _rank_cluster(cluster: Cluster, ranked_at: datetime, community_heat: float) 
 def _source_credibility(cluster: Cluster) -> float:
     if not cluster.source_names:
         return 0.0
-    values = [SOURCE_WEIGHTS.get(source, 0.45) for source in cluster.source_names]
-    return round((sum(values) / len(values)) * 0.25, 4)
+    values = [_source_weight(source) for source in cluster.source_names]
+    blended = (max(values) * 0.65) + ((sum(values) / len(values)) * 0.35)
+    return round(blended * 0.25, 4)
 
 
-def _recency(cluster: Cluster, ranked_at: datetime) -> float:
-    age_hours = max(0.0, (ranked_at - ensure_utc(cluster.created_at)).total_seconds() / 3600)
-    return round(max(0.0, 1 - (age_hours / 36)) * 0.18, 4)
+def _source_weight(source_name: str) -> float:
+    prefix = "finance_news_mcp_"
+    if source_name.startswith(prefix):
+        publisher = source_name.removeprefix(prefix)
+        return FINANCE_NEWS_MCP_WEIGHTS.get(publisher, 0.7)
+    if source_name == "rss" or source_name.startswith("rss_"):
+        return 0.65
+    return SOURCE_WEIGHTS.get(source_name, 0.45)
 
 
-def _coverage(cluster: Cluster) -> float:
+def _recency(published_at: datetime, ranked_at: datetime) -> float:
+    age_hours = max(0.0, (ranked_at - ensure_utc(published_at)).total_seconds() / 3600)
+    return round((1 / (1 + (age_hours / 24))) * 0.2, 4)
+
+
+def _cross_source_corroboration(cluster: Cluster) -> float:
+    source_count = len(set(cluster.source_names))
+    if source_count < 2:
+        return 0.0
+    source_component = min(source_count, 4) / 4
     item_component = min(len(cluster.item_ids), 4) / 4
-    source_component = min(len(set(cluster.source_names)), 3) / 3
-    return round(((item_component * 0.55) + (source_component * 0.45)) * 0.18, 4)
+    return round(((source_component * 0.8) + (item_component * 0.2)) * 0.18, 4)
 
 
 def _asset_importance(cluster: Cluster) -> float:
@@ -88,14 +123,14 @@ def _asset_importance(cluster: Cluster) -> float:
     title = cluster.canonical_title.lower()
     score = 0.0
     if assets & IMPORTANT_ASSETS:
-        score += 0.12
-    if "sec" in cluster.source_names or "sec" in title:
+        score += 0.11
+    if "sec_edgar" in cluster.source_names or "sec" in title:
         score += 0.05
     if "fred" in cluster.source_names or "fed" in title or "cpi" in title:
         score += 0.05
     if "options" in assets or "etf" in assets or "volatility" in topics:
         score += 0.04
-    return round(min(score, 0.24), 4)
+    return round(min(score, 0.22), 4)
 
 
 def _research_signal(cluster: Cluster) -> float:
@@ -103,10 +138,10 @@ def _research_signal(cluster: Cluster) -> float:
     topics = set(cluster.quant_topics)
     score = 0.0
     if sources & {"arxiv", "github", "quantconnect"}:
-        score += 0.08
-    if topics & RESEARCH_TOPICS:
         score += 0.07
-    return round(min(score, 0.15), 4)
+    if topics & RESEARCH_TOPICS:
+        score += 0.05
+    return round(min(score, 0.12), 4)
 
 
 def _community_heat(cluster: Cluster, community_heat: float) -> float:

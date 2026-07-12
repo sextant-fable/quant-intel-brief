@@ -129,6 +129,8 @@ Use `Generate AI Report` to summarize top-ranked local content with the configur
 
 New reports contain up to 10 ranked events. English is primary; concise Simplified Chinese translations are included for the headline, factual takeaway, market relevance, and watch points. Existing reports created before this format remain readable as legacy reports.
 
+Daily report candidates are selected by real publication time, not collection time. Defaults are 20 candidates per source, a 72-hour window for news/community content, 30 days for SEC/arXiv, two Top 10 entries per source, and three per market section. Empty market sections say that no qualifying new event was found instead of reusing stale content. Older Stack Exchange questions appear only under the Feed page's long-term Research Feed.
+
 ## One-Click Brief Refresh
 
 Open the Today page and use `Refresh Brief`:
