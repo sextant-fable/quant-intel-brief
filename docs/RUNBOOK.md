@@ -148,6 +148,8 @@ http://127.0.0.1:8000/reports
 
 Use `Generate AI Report` to summarize top-ranked local content with the configured OpenAI-compatible provider. This is a user-triggered LLM call. It does not send email, start the scheduler, bypass paywalls, or process premium full text.
 
+The Feed groups items by the exact collection run. Each batch shows its first three items by default; use `View all / 展开全部` for the remainder. Batch headers show US Eastern time (EST/EDT automatically) and browser-local time. The database stores UTC, and report freshness remains based on source `published_at` rather than collection time.
+
 New reports contain up to 10 ranked events. English is primary; concise Simplified Chinese translations are included for the headline, factual takeaway, market relevance, and watch points. Existing reports created before this format remain readable as legacy reports.
 
 Daily report candidates are selected by real publication time, not collection time. Defaults are 20 candidates per source, a 72-hour window for news/community content, 30 days for SEC/arXiv, two Top 10 entries per source, and three per market section. Empty market sections say that no qualifying new event was found instead of reusing stale content. Older Stack Exchange questions appear only under the Feed page's long-term Research Feed.
@@ -161,6 +163,8 @@ http://127.0.0.1:8000/dashboard/today
 ```
 
 This explicit action selects only sources with the minimum local configuration, runs them once, and generates a new Top 10 report from local content. Public arXiv, GitHub, GDELT, and Stack Exchange adapters may run without keys; credential-gated sources run only when their local credentials are present. The action does not send email or enable automatic scheduling.
+
+Each Top 10 event displays its cited original-source links. `Refresh Brief` collects and generates a report together; use `Generate AI Report` on Reports when you only want to summarize data already stored locally.
 
 Useful local `.env` settings:
 

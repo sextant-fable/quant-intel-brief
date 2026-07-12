@@ -7,6 +7,8 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 - `Source`: configured upstream data source.
 - `RawItem`: source-specific metadata and raw payload reference as fetched.
 - `ContentItem`: normalized article, post, filing, paper, video, or dataset signal.
+- `CollectionRun`: one explicit collection invocation with its trigger, sources, counts, and UTC timestamps.
+- `CollectionRunItem`: links every item observed in a collection invocation to that run, including known items seen again.
 - `EntityTag`: ticker, asset, organization, person, market, or topic.
 - `Cluster`: deduplicated group of related items.
 - `EventItem`: relationship between a cluster and a content item.
@@ -44,6 +46,7 @@ Shared SQLModel table definitions are implemented in `app/db/models.py`. Phase 1
 ## Schema Rules
 
 - Store timestamps in UTC.
+- Use source `published_at` for freshness and ranking; collection timestamps only record when collection happened.
 - Keep source timestamps separately from fetch timestamps.
 - Preserve source URLs and canonical URLs.
 - Do not store secret request headers or private cookies.

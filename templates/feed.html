@@ -74,40 +74,46 @@
   {% endif %}
 
   {% if view.feed_items %}
-    <section class="section-block feed-stream" aria-labelledby="daily-feed-title">
+    <section class="section-block feed-stream" aria-labelledby="collection-feed-title">
       <div class="section-heading">
         <div>
-          <p class="section-kicker">CURRENT SIGNALS</p>
-          <h2 id="daily-feed-title">Daily Feed</h2>
-          <p class="heading-translation">近期信息</p>
+          <p class="section-kicker">GROUPED BY COLLECTION</p>
+          <h2 id="collection-feed-title">Collection History</h2>
+          <p class="heading-translation">按每次采集分组</p>
         </div>
-        <span class="timestamp">{{ view.daily_item_count }}</span>
+        <span class="timestamp">{{ view.collection_groups|length }} batch{{ "" if view.collection_groups|length == 1 else "es" }}</span>
       </div>
-      {% if view.daily_items %}
-        <div class="feed-list">
-          {% for item in view.daily_items %}{{ render_feed_item(item) }}{% endfor %}
-        </div>
-      {% else %}
-        <p class="empty-state">No current items match the filters.</p>
-      {% endif %}
-    </section>
-
-    <section class="section-block feed-stream" id="research" aria-labelledby="research-feed-title">
-      <div class="section-heading">
-        <div>
-          <p class="section-kicker">LONGER HORIZON</p>
-          <h2 id="research-feed-title">Research Feed</h2>
-          <p class="heading-translation">长期研究信息流</p>
-        </div>
-        <span class="timestamp">{{ view.research_item_count }}</span>
+      <div class="collection-list">
+        {% for group in view.collection_groups %}
+          <article class="collection-group">
+            <header class="collection-header">
+              <div>
+                <h3>{{ group.title }} <span>#{{ loop.revindex }}</span></h3>
+                <p>{{ group.item_count }} items from {{ group.source_count }} sources</p>
+              </div>
+              <div class="collection-times">
+                <strong>{{ group.started_at_et }}</strong>
+                {% if group.started_at %}
+                  <span>US market time · 美东时间</span>
+                  <time data-local-datetime="{{ group.started_at }}">{{ group.started_at }}</time>
+                  <span>Your local time · 你的本地时间</span>
+                {% endif %}
+              </div>
+            </header>
+            <div class="feed-list">
+              {% for item in group.preview_items %}{{ render_feed_item(item) }}{% endfor %}
+            </div>
+            {% if group.remaining_items %}
+              <details class="collection-expand">
+                <summary>View all {{ group.item_count }} items <span lang="zh-Hans">展开全部</span></summary>
+                <div class="feed-list">
+                  {% for item in group.remaining_items %}{{ render_feed_item(item) }}{% endfor %}
+                </div>
+              </details>
+            {% endif %}
+          </article>
+        {% endfor %}
       </div>
-      {% if view.research_items %}
-        <div class="feed-list">
-          {% for item in view.research_items %}{{ render_feed_item(item) }}{% endfor %}
-        </div>
-      {% else %}
-        <p class="empty-state">No long-term research items match the filters.</p>
-      {% endif %}
     </section>
   {% else %}
     <p class="empty-state">No local content items match the current filters.</p>

@@ -14,6 +14,8 @@ from app.collectors.base import CollectorPersistenceSummary, CollectorStatus
 from app.core.config import Settings
 from app.core.timezones import UTC
 from app.db.models import (
+    CollectionRun,
+    CollectionRunItem,
     ContentItem,
     PremiumSourceNote,
     Report,
@@ -125,9 +127,47 @@ def test_old_stackexchange_items_render_only_in_long_term_research_feed() -> Non
     response = client.get("/feed")
 
     assert response.status_code == 200
-    assert "Research Feed" in response.text
+    assert "Collection History" in response.text
     assert "LONG-TERM RESEARCH" in response.text
     assert "Older option pricing research question" in response.text
+
+
+def test_feed_groups_collection_runs_and_collapses_after_three_items() -> None:
+    client, session = _client_with_session()
+    run = CollectionRun(
+        id="run-1",
+        trigger="manual_web",
+        started_at=datetime(2026, 7, 8, 12, 0, tzinfo=UTC),
+        completed_at=datetime(2026, 7, 8, 12, 1, tzinfo=UTC),
+    )
+    with session:
+        session.add(run)
+        for index in range(4):
+            item = ContentItem(
+                id=f"batch-item-{index}",
+                source_name=f"source-{index % 2}",
+                source_item_id=f"batch-source-item-{index}",
+                url=f"https://example.test/batch/{index}",
+                title=f"Batch headline {index}",
+                published_at=datetime(2026, 7, 8, 11, index, tzinfo=UTC),
+            )
+            session.add(item)
+            session.add(
+                CollectionRunItem(
+                    run_id=run.id,
+                    item_id=item.id,
+                    source_name=item.source_name,
+                )
+            )
+        session.commit()
+
+    response = client.get("/feed")
+
+    assert response.status_code == 200
+    assert "4 items from 2 sources" in response.text
+    assert "08:00 AM EDT" in response.text
+    assert "View all 4 items" in response.text
+    assert response.text.count("Batch headline") == 4
 
 
 def test_source_status_redacts_secret_like_messages_in_json_and_html() -> None:
@@ -250,6 +290,8 @@ def test_dashboard_feed_and_report_render_bilingual_top_ten() -> None:
     assert "Top 10 Today" in today.text
     assert "CPI 公布前 SPY 期权波动率上升" in today.text
     assert "Watch next" in today.text
+    assert "Newsapi · Open source" in today.text
+    assert 'href="https://example.test/market-1"' in today.text
     assert feed.status_code == 200
     assert "TOP 10 EXPLAINED" in feed.text
     assert "这可能影响短期 ETF 风险监测" in feed.text
@@ -274,6 +316,7 @@ def test_refresh_brief_uses_only_configured_sources_and_injected_runners(
         settings: Settings | None = None,
         sources: Any = None,
         collectors: Any = None,
+        **_: Any,
     ) -> CollectOnceResult:
         captured["sources"] = tuple(sources or ())
         return CollectOnceResult(requested_sources=tuple(sources or ()), summaries=())
@@ -508,6 +551,7 @@ def test_source_settings_run_button_uses_manual_collect_without_live_http(
         settings: Settings | None = None,
         sources: str | list[str] | tuple[str, ...] | None = None,
         collectors: Any = None,
+        **_: Any,
     ) -> CollectOnceResult:
         captured["sources"] = tuple(sources or ())
         captured["fred_key"] = (

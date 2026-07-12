@@ -16,7 +16,7 @@ from dateutil import parser as date_parser  # type: ignore[import-untyped]
 from sqlmodel import Session, select
 
 from app.core.timezones import UTC, ensure_utc, utc_now
-from app.db.models import ContentItem, RawItem, Source, SourceStatus
+from app.db.models import CollectionRunItem, ContentItem, RawItem, Source, SourceStatus
 from app.dedup.canonicalize import build_source_reference, canonicalize_url
 
 
@@ -104,6 +104,7 @@ class CollectorPersistenceSummary:
     raw_items_seen: int
     content_items_seen: int
     skipped_duplicates: int
+    content_item_ids: tuple[str, ...] = ()
 
 
 class SourceCollector:
@@ -260,6 +261,8 @@ def parse_datetime_utc(value: str | int | float | None) -> datetime | None:
 def persist_collector_result(
     session: Session,
     result: CollectorRunResult,
+    *,
+    collection_run_id: str | None = None,
 ) -> CollectorPersistenceSummary:
     """Persist a collector result as source, raw item, content item, and status rows."""
     source = _upsert_source(session, result)
@@ -268,6 +271,7 @@ def persist_collector_result(
     skipped_duplicates = result.skipped_duplicates
     seen_source_ids: set[str] = set()
     seen_canonical_urls: set[str] = set()
+    content_item_ids: list[str] = []
 
     for item in result.items:
         canonical_url = item.canonical_url or canonicalize_url_for_storage(item.url)
@@ -278,7 +282,18 @@ def persist_collector_result(
         seen_canonical_urls.add(canonical_url)
 
         raw_item, raw_created = _upsert_raw_item(session, source, item, canonical_url)
-        content_created = _upsert_content_item(session, source, raw_item, item, canonical_url)
+        content_item, content_created = _upsert_content_item(
+            session, source, raw_item, item, canonical_url
+        )
+        content_item_ids.append(content_item.id)
+        if collection_run_id is not None:
+            session.add(
+                CollectionRunItem(
+                    run_id=collection_run_id,
+                    item_id=content_item.id,
+                    source_name=source.name,
+                )
+            )
         raw_seen += int(raw_created)
         content_seen += int(content_created)
 
@@ -291,6 +306,7 @@ def persist_collector_result(
         raw_items_seen=raw_seen,
         content_items_seen=content_seen,
         skipped_duplicates=skipped_duplicates,
+        content_item_ids=tuple(content_item_ids),
     )
 
 
@@ -356,7 +372,7 @@ def _upsert_content_item(
     raw_item: RawItem,
     item: CollectedItem,
     canonical_url: str,
-) -> bool:
+) -> tuple[ContentItem, bool]:
     content_item = session.exec(
         select(ContentItem).where(
             ContentItem.source_name == source.name,
@@ -402,7 +418,7 @@ def _upsert_content_item(
     content_item.retention_until = _retention_until(item.fetched_at)
     content_item.source_reference = _source_reference_metadata(item, canonical_url)
     session.flush()
-    return created
+    return content_item, created
 
 
 def _upsert_source_status(

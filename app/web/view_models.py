@@ -5,10 +5,19 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from app.core.logging import redact_text
-from app.core.timezones import next_regular_market_open, utc_now
-from app.db.models import ContentItem, Report, ReportEventRecord, ReportSection, SourceStatus
+from app.core.timezones import next_regular_market_open, to_timezone, utc_now
+from app.db.models import (
+    CollectionRun,
+    CollectionRunItem,
+    ContentItem,
+    Report,
+    ReportEventRecord,
+    ReportSection,
+    SourceStatus,
+)
 from app.ranking.selection import is_long_term_research_item
 from app.web.filters import DashboardFilters
 
@@ -25,7 +34,11 @@ def build_dashboard_view(
     item_rows = _sort_items(items)
     report_rows = _sort_reports(reports)
     status_rows = list(statuses)
-    event_views = [_report_event_view(event) for event in _sort_report_events(report_events)]
+    source_names = {item.id: item.publisher or item.source_name for item in item_rows}
+    event_views = [
+        _report_event_view(event, source_names=source_names)
+        for event in _sort_report_events(report_events)
+    ]
     item_views = [_content_item_view(item) for item in item_rows]
     report_views = [_report_view(report) for report in report_rows]
     status_views = [_source_status_view(status) for status in status_rows]
@@ -60,6 +73,8 @@ def build_feed_view(
     items: Iterable[ContentItem],
     filters: DashboardFilters,
     report_events: Iterable[ReportEventRecord] = (),
+    collection_runs: Iterable[CollectionRun] = (),
+    collection_run_items: Iterable[CollectionRunItem] = (),
 ) -> dict[str, Any]:
     """Build feed page payload."""
     insights = _insights_by_source_id(report_events)
@@ -75,6 +90,24 @@ def build_feed_view(
         )
     daily_items = [item for item in item_views if item["feed_scope"] == "daily"]
     research_items = [item for item in item_views if item["feed_scope"] == "research"]
+    views_by_id = {item["id"]: item for item in item_views}
+    run_links: dict[str, list[dict[str, Any]]] = {}
+    linked_item_ids: set[str] = set()
+    for link in collection_run_items:
+        item_view = views_by_id.get(link.item_id)
+        if item_view is None:
+            continue
+        run_links.setdefault(link.run_id, []).append(item_view)
+        linked_item_ids.add(link.item_id)
+
+    collection_groups = [
+        _collection_group_view(run, run_links.get(run.id, []))
+        for run in sorted(collection_runs, key=lambda value: value.started_at, reverse=True)
+        if run_links.get(run.id)
+    ]
+    legacy_items = [item for item in item_views if item["id"] not in linked_item_ids]
+    if legacy_items:
+        collection_groups.append(_legacy_collection_group_view(legacy_items))
     return {
         "filters": filters.model_dump(),
         "has_active_filters": filters.has_active_filters,
@@ -84,6 +117,7 @@ def build_feed_view(
         "item_count": len(item_views),
         "daily_item_count": len(daily_items),
         "research_item_count": len(research_items),
+        "collection_groups": collection_groups,
     }
 
 
@@ -171,7 +205,11 @@ def _report_section_view(section: ReportSection) -> dict[str, Any]:
     }
 
 
-def _report_event_view(event: ReportEventRecord) -> dict[str, Any]:
+def _report_event_view(
+    event: ReportEventRecord,
+    *,
+    source_names: dict[str, str] | None = None,
+) -> dict[str, Any]:
     credibility_zh = {"high": "高", "medium": "中", "low": "低"}
     return {
         "id": event.id,
@@ -197,6 +235,10 @@ def _report_event_view(event: ReportEventRecord) -> dict[str, Any]:
             {
                 "id": source_id,
                 "url": event.source_urls[index],
+                "label": _source_link_label(
+                    event.source_urls[index],
+                    (source_names or {}).get(source_id),
+                ),
             }
             for index, source_id in enumerate(event.source_ids)
             if index < len(event.source_urls)
@@ -205,6 +247,46 @@ def _report_event_view(event: ReportEventRecord) -> dict[str, Any]:
         "assets": event.assets,
         "quant_topics": event.quant_topics,
     }
+
+
+def _collection_group_view(
+    run: CollectionRun,
+    items: list[dict[str, Any]],
+) -> dict[str, Any]:
+    ordered = sorted(items, key=lambda item: item["published_at"], reverse=True)
+    eastern = to_timezone(run.started_at, "America/New_York")
+    return {
+        "id": run.id,
+        "title": "Collection run",
+        "trigger": run.trigger,
+        "started_at": run.started_at.isoformat(),
+        "started_at_et": eastern.strftime("%b %d, %Y · %I:%M %p %Z"),
+        "item_count": len(ordered),
+        "source_count": len({item["source_name"] for item in ordered}),
+        "preview_items": ordered[:3],
+        "remaining_items": ordered[3:],
+    }
+
+
+def _legacy_collection_group_view(items: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "id": "legacy",
+        "title": "Earlier collection history",
+        "trigger": "legacy",
+        "started_at": "",
+        "started_at_et": "Before collection tracking was enabled",
+        "item_count": len(items),
+        "source_count": len({item["source_name"] for item in items}),
+        "preview_items": items[:3],
+        "remaining_items": items[3:],
+    }
+
+
+def _source_link_label(url: str, configured_name: str | None) -> str:
+    if configured_name:
+        return configured_name.replace("_", " ").title()
+    hostname = (urlparse(url).hostname or "Original source").removeprefix("www.")
+    return hostname
 
 
 def _source_status_view(status: SourceStatus) -> dict[str, Any]:

@@ -103,6 +103,36 @@ class ContentItem(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utc_now, nullable=False)
 
 
+class CollectionRun(SQLModel, table=True):
+    """One user- or system-triggered collection batch."""
+
+    __tablename__: ClassVar[str] = "collection_runs"
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    trigger: str = Field(default="manual", index=True)
+    requested_sources: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    started_at: datetime = Field(default_factory=utc_now, nullable=False, index=True)
+    completed_at: datetime | None = Field(default=None, index=True)
+    collector_count: int = 0
+    new_item_count: int = 0
+    failure_count: int = 0
+
+
+class CollectionRunItem(SQLModel, table=True):
+    """Content item observed during a collection batch."""
+
+    __tablename__: ClassVar[str] = "collection_run_items"
+    __table_args__: ClassVar[tuple[UniqueConstraint, ...]] = (
+        UniqueConstraint("run_id", "item_id", name="uq_collection_run_items_run_item"),
+    )
+
+    id: str = Field(default_factory=new_id, primary_key=True)
+    run_id: str = Field(foreign_key="collection_runs.id", index=True)
+    item_id: str = Field(foreign_key="content_items.id", index=True)
+    source_name: str = Field(index=True)
+    linked_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
 class EntityTag(SQLModel, table=True):
     """Tag attached to a content item or later event."""
 
@@ -281,6 +311,8 @@ class PremiumSourceNote(SQLModel, table=True):
 
 __all__ = [
     "Cluster",
+    "CollectionRun",
+    "CollectionRunItem",
     "ContentItem",
     "DeliveryLog",
     "EntityTag",

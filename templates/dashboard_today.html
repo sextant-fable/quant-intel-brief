@@ -117,8 +117,11 @@
                   <p class="source-reason">{{ event.source_credibility_reason }}</p>
                   <p class="source-links">
                     {% for source in event.source_links %}
-                      <a href="{{ source.url }}" target="_blank" rel="noreferrer">Source {{ loop.index }}</a>
+                      <a href="{{ source.url }}" target="_blank" rel="noreferrer">
+                        {{ source.label }} · Open source
+                      </a>
                     {% endfor %}
+                    {% if not event.source_links %}<span>No source link available</span>{% endif %}
                   </p>
                 </div>
               </div>

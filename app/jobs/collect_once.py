@@ -7,6 +7,7 @@ import asyncio
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, replace
+from datetime import datetime
 from typing import Protocol
 
 from pydantic import SecretStr
@@ -41,6 +42,7 @@ from app.collectors.x_api import XApiCollector
 from app.collectors.youtube import YouTubeCollector
 from app.core.config import Settings, get_settings
 from app.core.timezones import utc_now
+from app.db.models import CollectionRun
 from app.db.session import create_db_engine, init_db
 
 CORE_SOURCES = ("rss", "sec_edgar", "arxiv", "github", "fred")
@@ -77,6 +79,8 @@ class CollectOnceResult:
 
     requested_sources: tuple[str, ...]
     summaries: tuple[CollectorPersistenceSummary, ...]
+    run_id: str | None = None
+    started_at: datetime | None = None
 
     @property
     def collector_count(self) -> int:
@@ -98,6 +102,7 @@ async def collect_once(
     settings: Settings | None = None,
     sources: str | Iterable[str] | None = None,
     collectors: Sequence[CollectorLike] | None = None,
+    trigger: str = "manual",
 ) -> CollectOnceResult:
     """Collect configured sources once and persist source statuses/items locally."""
     selected_sources = parse_sources(sources)
@@ -111,17 +116,35 @@ async def collect_once(
         else selected_sources
     )
     summaries: list[CollectorPersistenceSummary] = []
+    run = CollectionRun(
+        trigger=trigger,
+        requested_sources=list(requested_sources),
+    )
+    session.add(run)
+    session.flush()
 
     for collector in active_collectors:
         try:
             result = await collector.collect()
         except Exception as exc:
             result = _exception_result(collector, exc)
-        summaries.append(persist_collector_result(session, result))
+        summaries.append(
+            persist_collector_result(session, result, collection_run_id=run.id)
+        )
+
+    run.completed_at = utc_now()
+    run.collector_count = len(summaries)
+    run.new_item_count = sum(summary.content_items_seen for summary in summaries)
+    ok_statuses = {CollectorStatus.SUCCESS, CollectorStatus.EMPTY}
+    run.failure_count = sum(1 for summary in summaries if summary.status not in ok_statuses)
+    session.add(run)
+    session.commit()
 
     return CollectOnceResult(
         requested_sources=requested_sources,
         summaries=tuple(summaries),
+        run_id=run.id,
+        started_at=run.started_at,
     )
 
 

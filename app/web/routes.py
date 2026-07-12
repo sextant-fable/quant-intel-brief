@@ -26,6 +26,8 @@ from app.core.source_settings import (
 )
 from app.core.timezones import utc_now
 from app.db.models import (
+    CollectionRun,
+    CollectionRunItem,
     ContentItem,
     PremiumSourceNote,
     Report,
@@ -211,6 +213,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
                             session,
                             settings=settings,
                             sources=selected_sources,
+                            trigger="source_settings",
                         )
                 except Exception as exc:
                     run_error = redact_text(f"Collect once failed: {exc}")
@@ -348,6 +351,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
                         session,
                         settings=settings,
                         sources=selected_sources,
+                        trigger="dashboard_refresh",
                     )
                 report_result = generate_ai_report_from_local_content(
                     session,
@@ -390,11 +394,15 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
         )
         with Session(app.state.engine) as session:
             items = session.exec(select(ContentItem)).all()
+            collection_runs = session.exec(select(CollectionRun)).all()
+            collection_run_items = session.exec(select(CollectionRunItem)).all()
             report_events = _latest_structured_report_events(session)
         view = build_feed_view(
             items=filter_content_items(items, filters),
             filters=filters,
             report_events=report_events,
+            collection_runs=collection_runs,
+            collection_run_items=collection_run_items,
         )
         return templates.TemplateResponse(
             request,

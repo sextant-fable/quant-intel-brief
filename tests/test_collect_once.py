@@ -8,7 +8,7 @@ from sqlmodel import Session, select
 
 from app.collectors.base import CollectedItem, CollectorRunResult, CollectorStatus, SourceCollector
 from app.core.config import Settings
-from app.db.models import ContentItem, SourceStatus
+from app.db.models import CollectionRun, CollectionRunItem, ContentItem, SourceStatus
 from app.db.session import create_db_engine, init_db
 from app.jobs.collect_once import (
     DEFAULT_SOURCES,
@@ -158,6 +158,8 @@ async def test_collect_once_persists_success_and_failure_statuses() -> None:
         result = await collect_once(session, collectors=collectors)
         statuses = session.exec(select(SourceStatus).order_by(SourceStatus.source_name)).all()
         items = session.exec(select(ContentItem)).all()
+        runs = session.exec(select(CollectionRun)).all()
+        run_items = session.exec(select(CollectionRunItem)).all()
 
     assert result.collector_count == 2
     assert result.total_items_seen == 1
@@ -168,6 +170,43 @@ async def test_collect_once_persists_success_and_failure_statuses() -> None:
         CollectorStatus.SUCCESS.value,
     ]
     assert [item.source_item_id for item in items] == ["item-1"]
+    assert len(runs) == 1
+    assert runs[0].collector_count == 2
+    assert runs[0].failure_count == 1
+    assert [link.item_id for link in run_items] == [items[0].id]
+
+
+@pytest.mark.asyncio
+async def test_repeated_collection_links_existing_item_to_each_run() -> None:
+    engine = create_db_engine("sqlite://")
+    init_db(engine)
+    collector = FakeCollector(
+        CollectorRunResult(
+            source_name="fixture",
+            source_type="fixture",
+            display_name="Fixture",
+            status=CollectorStatus.SUCCESS,
+            items=[
+                CollectedItem(
+                    source_name="fixture",
+                    source_item_id="same-item",
+                    url="https://example.test/same-item",
+                    title="Same fixture item",
+                )
+            ],
+        )
+    )
+
+    with Session(engine) as session:
+        first = await collect_once(session, collectors=[collector])
+        second = await collect_once(session, collectors=[collector])
+        items = session.exec(select(ContentItem)).all()
+        links = session.exec(select(CollectionRunItem)).all()
+
+    assert first.run_id != second.run_id
+    assert len(items) == 1
+    assert len(links) == 2
+    assert {link.run_id for link in links} == {first.run_id, second.run_id}
 
 
 @pytest.mark.asyncio

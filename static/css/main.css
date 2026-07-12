@@ -868,6 +868,76 @@ button small,
   padding-top: 11px;
 }
 
+.collection-list {
+  display: grid;
+  gap: 24px;
+}
+
+.collection-group {
+  border-top: 3px solid var(--ink);
+  padding-top: 16px;
+}
+
+.collection-header {
+  align-items: start;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.collection-header h3,
+.collection-header p {
+  margin: 0;
+}
+
+.collection-header h3 span {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.collection-header p {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.collection-times {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.collection-times span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.collection-times time {
+  font-weight: 600;
+}
+
+.collection-expand {
+  margin-top: 12px;
+}
+
+.collection-expand summary {
+  color: var(--link);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 12px 0;
+}
+
+.collection-expand summary span {
+  color: var(--muted);
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.collection-expand[open] summary {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+
 .coverage-note {
   background: var(--panel-soft);
   border-left: 3px solid var(--accent);
@@ -1197,9 +1267,14 @@ th {
 
   .brief-header,
   .page-heading,
-  .section-heading {
+  .section-heading,
+  .collection-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .collection-times {
+    text-align: left;
   }
 
   h1 {
